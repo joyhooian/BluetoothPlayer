@@ -1,0 +1,9 @@
+
+.bottomBox {
+		position: fixed;
+		margin: auto;
+		bottom: 60rpx;
+		left: 0;
+		right: 0;
+}
+

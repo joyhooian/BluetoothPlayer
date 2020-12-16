@@ -1,0 +1,29 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/plugin/animation",
+    "pages/alarms/alarms",
+    "pages/setting/setting",
+    "pages/load/load",
+    "pages/alarms/set-time",
+    "pages/alarms/time-after"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarBackgroundColor": "#0081ff",
+    "navigationBarTitleText": "ColorUi for UniApp",
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "white"
+  },
+  "usingComponents": {
+    "links": "/pages/links/links",
+    "alarms": "/pages/alarms/alarms",
+    "load": "/pages/load/load",
+    "setting": "/pages/setting/setting",
+    "basics": "/pages/basics/home",
+    "components": "/pages/component/home",
+    "plugin": "/pages/plugin/home",
+    "cu-custom": "/colorui/components/cu-custom"
+  },
+  "sitemapLocation": "sitemap89.json"
+}
