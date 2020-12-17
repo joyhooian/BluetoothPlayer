@@ -123,7 +123,8 @@ var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 2));function _i
     musicInfo: [],
     alarmsInfo: [],
     curMusic: 0,
-    innerAudioContext: null },
+    innerAudioContext: null,
+    isPlaying: false },
 
   onLaunch: function onLaunch() {
     _vue.default.prototype.dosomething = function (e) {
@@ -869,6 +870,7 @@ var _self;var _default =
         _self.musicInfo[e.currentTarget.id].isSelect = !_self.musicInfo[e.currentTarget.id].isSelect;
       } else {
         _self.curMusic = e.currentTarget.id;
+        getApp().globalData.curMusic = e.currentTarget.id;
         if (_self.isPlaying) {
           _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
         }
@@ -878,8 +880,10 @@ var _self;var _default =
     LastMusic: function LastMusic() {
       var musicCnt = _self.musicInfo.length;
       _self.curMusic--;
+      getApp().globalData.curMusic--;
       if (_self.curMusic < 0) {
         _self.curMusic = musicCnt - 1;
+        getApp().globalData.curMusic = musicCnt - 1;
       }
       if (_self.isPlaying) {
         _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
@@ -889,8 +893,10 @@ var _self;var _default =
     NextMusic: function NextMusic() {
       var musicCnt = _self.musicInfo.length;
       _self.curMusic++;
+      getApp().globalData.curMusic++;
       if (_self.curMusic >= musicCnt) {
-        _self.curMusic = 0;
+        _self.curMusic;
+        getApp().globalData.curMusic = 0;
       }
       if (_self.isPlaying) {
         _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
@@ -926,6 +932,7 @@ var _self;var _default =
       if (_self.musicInfo[_self.curMusic] != null)
       {
         _self.isPlaying = !_self.isPlaying;
+        getApp().globalData.isPlaying = _self.isPlaying;
         if (_self.isPlaying) {
           _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
           _self.innerAudioContext.autoplay = true;
@@ -942,6 +949,7 @@ var _self;var _default =
             if (_self.playModeIndex == 0)
             {
               _self.isPlaying = false;
+              getApp().globalData.isPlaying = false;
             } else if (_self.playModeIndex == 1) {
               _self.innerAudioContext.play();
             } else {
@@ -1024,6 +1032,11 @@ var _self;var _default =
     _self.musicInfo = getApp().globalData.musicInfo;
     _self.innerAudioContext = getApp().globalData.innerAudioContext;
     _self.curMusic = getApp().globalData.curMusic;
+    _self.isPlaying = getApp().globalData.isPlaying;
+  },
+  deactivated: function deactivated() {
+    console.log("here");
+    _self.innerAudioContext.stop();
   } };exports.default = _default;
 
 /***/ }),

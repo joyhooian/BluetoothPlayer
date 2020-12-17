@@ -140,6 +140,7 @@
 					_self.musicInfo[e.currentTarget.id].isSelect = !_self.musicInfo[e.currentTarget.id].isSelect
 				} else {
 					_self.curMusic = e.currentTarget.id
+					getApp().globalData.curMusic = e.currentTarget.id
 					if (_self.isPlaying) {
 						_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
 					}
@@ -149,8 +150,10 @@
 			LastMusic(){
 				let musicCnt = _self.musicInfo.length
 				_self.curMusic--
+				getApp().globalData.curMusic--
 				if (_self.curMusic < 0) {
 					_self.curMusic = musicCnt - 1
+					getApp().globalData.curMusic = musicCnt - 1
 				}
 				if (_self.isPlaying) {
 					_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
@@ -160,8 +163,10 @@
 			NextMusic() {
 				let musicCnt = _self.musicInfo.length
 				_self.curMusic++
+				getApp().globalData.curMusic++
 				if (_self.curMusic >= musicCnt) {
-					_self.curMusic = 0
+					_self.curMusic
+					getApp().globalData.curMusic = 0
 				}
 				if (_self.isPlaying) {
 					_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
@@ -197,6 +202,7 @@
 				if (_self.musicInfo[_self.curMusic] != null)
 				{
 					_self.isPlaying = !_self.isPlaying
+					getApp().globalData.isPlaying = _self.isPlaying
 					if (_self.isPlaying) {
 						_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
 						_self.innerAudioContext.autoplay = true
@@ -213,6 +219,7 @@
 							if (_self.playModeIndex == 0)
 							{
 								_self.isPlaying = false
+								getApp().globalData.isPlaying = false
 							} else if (_self.playModeIndex == 1) {
 								_self.innerAudioContext.play()
 							} else {
@@ -295,6 +302,11 @@
 			_self.musicInfo = getApp().globalData.musicInfo
 			_self.innerAudioContext = getApp().globalData.innerAudioContext
 			_self.curMusic = getApp().globalData.curMusic
+			_self.isPlaying = getApp().globalData.isPlaying
+		},
+		deactivated() {
+			console.log("here")
+			_self.innerAudioContext.stop()
 		}
 	}
 </script>
