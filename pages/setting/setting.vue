@@ -6,18 +6,19 @@
 		<view class="cu-bar bg-white shadow shadow-blur radius-bottom" :style="{position: 'fixed', left: 0, width: '100%', top:CustomBar + 'px', zIndex: 1000}">
 			<view class="action">
 				<button v-if="!isSettingLight" class="cu-btn round lines-red" @click="Delete"><text>删除</text></button>
+				<button v-else class="cu-btn round lines-black sm" @click="LightBack"><text class="text-sm">返回</text></button>
 			</view>
 			<view class="content text-bold"></view>
 			<view class="action">
-				<button v-if="!isSettingLight" @click="Mute" class="cu-btn round lines-black margin-right-xs"><text>静音</text></button>
-				<button v-if="!isSettingLight" @click="All" class="cu-btn round lines-black margin-right-xs"><text>循环</text></button>
-				<button v-if="!isSettingLight" @click="Single" class="cu-btn round lines-black margin-right-xs"><text>单曲</text></button>
-				<button v-if="isSettingLight" id="MODE01" @click="SelectLight" :class="lightMode=='MODE01'?'bg-red':'lines-black'" class="cu-btn round margin-right-xs"><text class="text-xs">模式一</text></button>
-				<button v-if="isSettingLight" id="MODE02" @click="SelectLight" :class="lightMode=='MODE02'?'bg-red':'lines-black'" class="cu-btn round margin-right-xs"><text class="text-xs">模式二</text></button>
-				<button v-if="isSettingLight" id="MODE03" @click="SelectLight" :class="lightMode=='MODE03'?'bg-red':'lines-black'" class="cu-btn round margin-right-xs"><text class="text-xs">模式三</text></button>
-				<button v-if="isSettingLight" id="MODE04" @click="SelectLight" :class="lightMode=='MODE04'?'bg-red':'lines-black'" class="cu-btn round margin-right-xs"><text class="text-xs">模式四</text></button>
+				<button v-if="!isSettingLight" @click="Mute" class="cu-btn round margin-right-xs" :class="isMuted?'bg-red':'lines-black'"><text>静音</text></button>
+				<button v-if="!isSettingLight" @click="All" class="cu-btn round margin-right-xs" :class="isAll?'bg-red':'lines-black'"><text>循环</text></button>
+				<button v-if="!isSettingLight" @click="Single" class="cu-btn round margin-right-xs" :class="isSingle?'bg-red':'lines-black'"><text>单曲</text></button>
+				<button v-if="isSettingLight" id="MODE01" @click="SelectLight" :class="lightMode=='MODE01'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式一</text></button>
+				<button v-if="isSettingLight" id="MODE02" @click="SelectLight" :class="lightMode=='MODE02'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式二</text></button>
+				<button v-if="isSettingLight" id="MODE03" @click="SelectLight" :class="lightMode=='MODE03'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式三</text></button>
+				<button v-if="isSettingLight" id="MODE04" @click="SelectLight" :class="lightMode=='MODE04'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式四</text></button>
 				<button v-if="!isSettingLight" @click="LightMode" class="cu-btn round lines-black"><text>灯模式</text></button>
-				<button v-if="isSettingLight" @click="UploadLightMode" class="cu-btn round lines-black"><text>确定</text></button>
+				<button v-if="isSettingLight" @click="UploadLightMode" class="cu-btn round lines-black sm"><text class="text-sm">确定</text></button>
 			</view>
 		</view>
 		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
@@ -59,10 +60,16 @@
 				isSelected: null,
 				fileList: [],
 				lightMode: '',
-				valueListen: ''
+				valueListen: '',
+				isMuted: false,
+				isSingle: false,
+				isAll: false
 			}
 		},
 		methods: {
+			LightBack() {
+				this.isSettingLight = false
+			},
 			DownLoadData() {
 				console.log("下载文件")
 				this.isDownloading  = true
@@ -147,28 +154,57 @@
 				this.isSettingLight = false
 			},
 			Mute() {
-				console.log("静音")
-				var message = "AT+MUTE"
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(message),
-					success: (res) => {
-						console.log("发送数据成功 " + res.errMsg)
-						wx.showToast({
-							title: "静音成功",
-							icon: "none"
-						})
-					},
-					fail: (res) => {
-						console.log("发送数据失败 " + res.errMsg)
-						wx.showToast({
-							title: "静音失败",
-							icon: "none"
-						})
-					}
-				})
+				if (this.isMuted){
+					this.isMuted = false
+					getApp().globalData.isMuted = this.isMuted
+					console.log("取消静音")
+					// var message = "AT+MUTE"
+					// wx.writeBLECharacteristicValue({
+					// 	deviceId: this.devices[0].deviceId,
+					// 	serviceId: this.primaryServiceUUID,
+					// 	characteristicId: this.writeUUID,
+					// 	value: this.MessageToArrayBuffer(message),
+					// 	success: (res) => {
+					// 		console.log("发送数据成功 " + res.errMsg)
+					// 		wx.showToast({
+					// 			title: "静音成功",
+					// 			icon: "none"
+					// 		})
+					// 	},
+					// 	fail: (res) => {
+					// 		console.log("发送数据失败 " + res.errMsg)
+					// 		wx.showToast({
+					// 			title: "静音失败",
+					// 			icon: "none"
+					// 		})
+					// 	}
+					// })
+				} else {
+					console.log("静音")
+					var message = "AT+MUTE"
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: this.MessageToArrayBuffer(message),
+						success: (res) => {
+							console.log("发送数据成功 " + res.errMsg)
+							wx.showToast({
+								title: "静音成功",
+								icon: "none"
+							})
+							this.isMuted = true
+							getApp().globalData.isMuted = this.isMuted
+						},
+						fail: (res) => {
+							console.log("发送数据失败 " + res.errMsg)
+							wx.showToast({
+								title: "静音失败",
+								icon: "none"
+							})
+						}
+					})
+				}
 			},
 			Single() {
 				console.log("单曲")
@@ -184,6 +220,10 @@
 							title: "设置单曲播放成功",
 							icon: "none"
 						})
+						this.isSingle = true
+						this.isAll = false
+						getApp().globalData.isSingle = this.isSingle
+						getApp().globalData.isAll = this.isAll
 					},
 					fail: (res) => {
 						console.log("发送数据失败 " + res.errMsg)
@@ -208,6 +248,10 @@
 							title: "设置循环播放成功",
 							icon: "none"
 						})
+						this.isSingle = false
+						this.isAll = true
+						getApp().globalData.isSingle = this.isSingle
+						getApp().globalData.isAll = this.isAll
 					},
 					fail: (res) => {
 						console.log("发送数据失败 " + res.errMsg)
@@ -278,6 +322,9 @@
 			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			this.readUUID = getApp().globalData.readUUID
 			this.writeUUID = getApp().globalData.writeUUID
+			this.isMuted = getApp().globalData.isMuted
+			this.isSingle = getApp().globalData.isSingle
+			this.isAll = getApp().globalData.isAll
 			console.log(this)
 		}
 	}

@@ -124,7 +124,10 @@ var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 2));function _i
     alarmsInfo: [],
     curMusic: 0,
     innerAudioContext: null,
-    isPlaying: false },
+    isPlaying: false,
+    isMuted: false,
+    isSingle: false,
+    isAll: false },
 
   onLaunch: function onLaunch() {
     _vue.default.prototype.dosomething = function (e) {
@@ -1224,6 +1227,7 @@ Object.defineProperty(exports, "__esModule", { value: true });exports.default = 
 //
 //
 //
+//
 var _default =
 {
   name: "setting",
@@ -1238,10 +1242,16 @@ var _default =
       isSelected: null,
       fileList: [],
       lightMode: '',
-      valueListen: '' };
+      valueListen: '',
+      isMuted: false,
+      isSingle: false,
+      isAll: false };
 
   },
   methods: {
+    LightBack: function LightBack() {
+      this.isSettingLight = false;
+    },
     DownLoadData: function DownLoadData() {var _this = this;
       console.log("下载文件");
       this.isDownloading = true;
@@ -1325,31 +1335,60 @@ var _default =
 
       this.isSettingLight = false;
     },
-    Mute: function Mute() {
-      console.log("静音");
-      var message = "AT+MUTE";
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
-        success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
-          wx.showToast({
-            title: "静音成功",
-            icon: "none" });
+    Mute: function Mute() {var _this2 = this;
+      if (this.isMuted) {
+        this.isMuted = false;
+        getApp().globalData.isMuted = this.isMuted;
+        console.log("取消静音");
+        // var message = "AT+MUTE"
+        // wx.writeBLECharacteristicValue({
+        // 	deviceId: this.devices[0].deviceId,
+        // 	serviceId: this.primaryServiceUUID,
+        // 	characteristicId: this.writeUUID,
+        // 	value: this.MessageToArrayBuffer(message),
+        // 	success: (res) => {
+        // 		console.log("发送数据成功 " + res.errMsg)
+        // 		wx.showToast({
+        // 			title: "静音成功",
+        // 			icon: "none"
+        // 		})
+        // 	},
+        // 	fail: (res) => {
+        // 		console.log("发送数据失败 " + res.errMsg)
+        // 		wx.showToast({
+        // 			title: "静音失败",
+        // 			icon: "none"
+        // 		})
+        // 	}
+        // })
+      } else {
+        console.log("静音");
+        var message = "AT+MUTE";
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: this.MessageToArrayBuffer(message),
+          success: function success(res) {
+            console.log("发送数据成功 " + res.errMsg);
+            wx.showToast({
+              title: "静音成功",
+              icon: "none" });
 
-        },
-        fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
-          wx.showToast({
-            title: "静音失败",
-            icon: "none" });
+            _this2.isMuted = true;
+            getApp().globalData.isMuted = _this2.isMuted;
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败 " + res.errMsg);
+            wx.showToast({
+              title: "静音失败",
+              icon: "none" });
 
-        } });
+          } });
 
+      }
     },
-    Single: function Single() {
+    Single: function Single() {var _this3 = this;
       console.log("单曲");
       var message = "AT+ONLY";
       wx.writeBLECharacteristicValue({
@@ -1363,6 +1402,10 @@ var _default =
             title: "设置单曲播放成功",
             icon: "none" });
 
+          _this3.isSingle = true;
+          _this3.isAll = false;
+          getApp().globalData.isSingle = _this3.isSingle;
+          getApp().globalData.isAll = _this3.isAll;
         },
         fail: function fail(res) {
           console.log("发送数据失败 " + res.errMsg);
@@ -1373,7 +1416,7 @@ var _default =
         } });
 
     },
-    All: function All() {
+    All: function All() {var _this4 = this;
       console.log("循环");
       var message = "AT+ALL";
       wx.writeBLECharacteristicValue({
@@ -1387,6 +1430,10 @@ var _default =
             title: "设置循环播放成功",
             icon: "none" });
 
+          _this4.isSingle = false;
+          _this4.isAll = true;
+          getApp().globalData.isSingle = _this4.isSingle;
+          getApp().globalData.isAll = _this4.isAll;
         },
         fail: function fail(res) {
           console.log("发送数据失败 " + res.errMsg);
@@ -1457,6 +1504,9 @@ var _default =
     this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     this.readUUID = getApp().globalData.readUUID;
     this.writeUUID = getApp().globalData.writeUUID;
+    this.isMuted = getApp().globalData.isMuted;
+    this.isSingle = getApp().globalData.isSingle;
+    this.isAll = getApp().globalData.isAll;
     console.log(this);
   } };exports.default = _default;
 

@@ -11,7 +11,10 @@
 			alarmsInfo:[],
 			curMusic: 0,
 			innerAudioContext: null,
-			isPlaying: false
+			isPlaying: false,
+			isMuted: false,
+			isSingle: false,
+			isAll: false
 		},
 		onLaunch: function() {
 			Vue.prototype.dosomething = (e) => {
