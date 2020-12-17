@@ -190,14 +190,61 @@ var _default =
       this.secAfter = e.detail.value;
     },
     upload: function upload() {var _this = this;
-      this.isLoading = true;
-      console.log(this.volume);
-      console.log(this.relayStatus);
-      console.log(this.secAfter);
-      setTimeout(function () {
-        _this.isLoading = false;
-      }, 1000);
-    } } };exports.default = _default;
+      if (this.secAfter == 0) {
+        wx.showToast({
+          title: "请输入间隔时间!",
+          icon: "none" });
+
+      } else if (this.secAfter <= 9999) {
+        this.isLoading = true;
+        var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
+        "V" + (this.volume < 10 ? '0' + this.volume : this.volume) +
+        "J" + (this.relayStatus ? "01" : "00");
+        console.log(cmd);
+        setTimeout(function () {
+          wx.writeBLECharacteristicValue({
+            deviceId: _this.devices[0].deviceId,
+            serviceId: _this.primaryServiceUUID,
+            characteristicId: _this.writeUUID,
+            value: _this.MessageToArrayBuffer(cmd),
+            success: function success(res) {
+              console.log("发送成功, 发送内容:" + cmd);
+              wx.showToast({
+                title: "发送成功",
+                icon: "none" });
+
+            },
+            fail: function fail() {
+              console.log("发送失败");
+              wx.showToast({
+                title: "发送失败",
+                icon: "none" });
+
+            } });
+
+        }, 100);
+        console.log(this.volume);
+        console.log(this.relayStatus);
+        console.log(this.secAfter);
+        setTimeout(function () {
+          _this.isLoading = false;
+        }, 1000);
+      } else if (this.secAfter > 9999) {
+        this.secAfter = 9999;
+        wx.showToast({
+          title: "间隔时间不得超过9999s!",
+          icon: "none" });
+
+      }
+    } },
+
+  created: function created() {
+    this.devices = getApp().globalData.devices;
+    this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
+    this.readUUID = getApp().globalData.readUUID;
+    this.writeUUID = getApp().globalData.writeUUID;
+    console.log(this);
+  } };exports.default = _default;
 
 /***/ })
 

@@ -222,7 +222,7 @@ var _self;var _default =
         if (alarm.isUsing) {
           var cmd = "AT+TIMESET" + (index + 1 < 10 ? '0' + (index + 1) : index + 1) +
           'T' + alarm.startTime.replace(':', '') + alarm.stopTime.replace(':', '') +
-          'V' + alarm.volume +
+          'V' + (alarm.volume < 10 ? '0' + alarm.volume : alarm.volume) +
           'J' + (alarm.relayStatus ? '01' : '00');
           alarm.weekdays.forEach(function (weekday) {
             cmd += 'W' + '0' + (weekday + 1);

@@ -60,14 +60,60 @@
 				this.secAfter = e.detail.value
 			},
 			upload(){
-				this.isLoading = true
-				console.log(this.volume)
-				console.log(this.relayStatus)
-				console.log(this.secAfter)
-				setTimeout(() => {
-					this.isLoading = false
-				}, 1000)
+				if (this.secAfter == 0){
+					wx.showToast({
+						title: "请输入间隔时间!",
+						icon: "none"
+					})
+				} else if (this.secAfter <= 9999) {
+					this.isLoading = true
+					var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
+					"V" + (this.volume<10?'0'+this.volume:this.volume) +
+					"J" + (this.relayStatus?"01":"00")
+					console.log(cmd)
+					setTimeout(() => {
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: this.MessageToArrayBuffer(cmd),
+							success: (res) => {
+								console.log("发送成功, 发送内容:" + cmd)
+								wx.showToast({
+									title: "发送成功",
+									icon: "none"
+								})
+							},
+							fail: () => {
+								console.log("发送失败")
+								wx.showToast({
+									title: "发送失败",
+									icon: "none"
+								})
+							}
+						})
+					}, 100)
+					console.log(this.volume)
+					console.log(this.relayStatus)
+					console.log(this.secAfter)
+					setTimeout(() => {
+						this.isLoading = false
+					}, 1000)
+				} else if (this.secAfter > 9999) {
+					this.secAfter = 9999
+					wx.showToast({
+						title: "间隔时间不得超过9999s!",
+						icon: "none"
+					})
+				}
 			}
+		},
+		created() {
+			this.devices = getApp().globalData.devices
+			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
+			this.readUUID = getApp().globalData.readUUID
+			this.writeUUID = getApp().globalData.writeUUID
+			console.log(this)
 		}
 	}
 </script>

@@ -28,7 +28,7 @@
 				<view class="cu-item">
 					<view class="centent">重复</view>
 					<view class="action">
-						<view v-for="(weekday, weekdayNum) in alarmsInfo[index].weekdays" :key="weekdayNum" class="cu-tag light round bg-red">{{weekdaysString[weekday].string}}</view>
+						<view v-for="(weekday, weekdayNum) in alarmsInfo[index].weekdays" :key="weekdayNum" class="cu-tag light sm round bg-red">{{weekdaysString[weekday].string}}</view>
 					</view>
 				</view>
 				<view class="cu-item">
@@ -106,7 +106,7 @@
 					if (alarm.isUsing) {
 						var cmd = "AT+TIMESET" + ((index+1)<10?'0'+(index+1):(index+1)) +
 						'T' + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') +
-						'V' + alarm.volume +
+						'V' + (alarm.volume<10?'0'+alarm.volume:alarm.volume) +
 						'J' + (alarm.relayStatus?'01':'00')
 						alarm.weekdays.forEach((weekday) => {
 							cmd += 'W' + '0' + (weekday + 1)

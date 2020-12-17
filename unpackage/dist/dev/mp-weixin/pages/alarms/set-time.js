@@ -318,6 +318,8 @@ var _default =
             this.alarmsInfo[this.editingIndex].stopTime = this.stopTime;
           } else {
             //先删除之前的数组元素
+            var tempUsing;
+            tempUsing = this.alarmsInfo[this.editingIndex].isUsing;
             this.alarmsInfo.splice(this.editingIndex, 1);
             try {
               //比较更改后的元素与数组内的先后顺序
@@ -331,7 +333,7 @@ var _default =
                       relayStatus: _this.relayStatus,
                       startTime: _this.startTime,
                       stopTime: _this.stopTime,
-                      isUsing: false });
+                      isUsing: tempUsing });
 
                     throw new Error("结束比较");
                   }
@@ -344,7 +346,7 @@ var _default =
                       relayStatus: _this.relayStatus,
                       startTime: _this.startTime,
                       stopTime: _this.stopTime,
-                      isUsing: false });
+                      isUsing: tempUsing });
 
                     throw new Error("结束比较");
                   }
@@ -356,7 +358,7 @@ var _default =
                         relayStatus: _this.relayStatus,
                         startTime: _this.startTime,
                         stopTime: _this.stopTime,
-                        isUsing: false });
+                        isUsing: tempUsing });
 
                     }
               });

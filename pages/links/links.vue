@@ -216,6 +216,20 @@
 								icon: 'none'
 							})
 							_self.devices[e.currentTarget.id].avatar = 'static/bluetooth_con.png' 
+							setTimeout(() => {
+								wx.writeBLECharacteristicValue({
+									deviceId: this.devices[0].deviceId,
+									serviceId: this.primaryServiceUUID,
+									characteristicId: this.writeUUID,
+									value: this.uploadTime(),
+									success: (res) => {
+										console.log("发送成功 " + res.errMsg)
+									},
+									fail: () => {
+										console.log("发送失败 " + res.errMsg)
+									}
+								})
+							}, 100)
 						},
 						fail: () => {
 							_self.devices[e.currentTarget.id].status = "disconnected"

@@ -296,7 +296,7 @@ var _self;var _default =
         } });
 
     },
-    disconnectDevice: function disconnectDevice(e) {
+    disconnectDevice: function disconnectDevice(e) {var _this2 = this;
       if (_self.devices[e.currentTarget.id].status == "connected") {
         _self.devices[e.currentTarget.id].status = "changingStatus";
         wx.closeBLEConnection({
@@ -332,6 +332,20 @@ var _self;var _default =
               icon: 'none' });
 
             _self.devices[e.currentTarget.id].avatar = 'static/bluetooth_con.png';
+            setTimeout(function () {
+              wx.writeBLECharacteristicValue({
+                deviceId: _this2.devices[0].deviceId,
+                serviceId: _this2.primaryServiceUUID,
+                characteristicId: _this2.writeUUID,
+                value: _this2.uploadTime(),
+                success: function success(res) {
+                  console.log("发送成功 " + res.errMsg);
+                },
+                fail: function fail() {
+                  console.log("发送失败 " + res.errMsg);
+                } });
+
+            }, 100);
           },
           fail: function fail() {
             _self.devices[e.currentTarget.id].status = "disconnected";
