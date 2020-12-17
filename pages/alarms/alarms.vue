@@ -114,37 +114,39 @@
 						alarmsMessage.push(cmd)
 					}
 				})
-				console.log(this)
 				if (this.primaryServiceUUID != '' && this.writeUUID != ''){
+					console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
 					alarmsMessage.forEach((item, index) => {
 						setTimeout(() => {
 							wx.writeBLECharacteristicValue({
-								deviceId: this.deviceId,
+								deviceId: this.devices[0].deviceId,
 								serviceId: this.primaryServiceUUID,
 								characteristicId: this.writeUUID,
 								value: this.MessageToArrayBuffer(item),
 								success: (res) => {
-									console.log(res)
+									console.log("发送成功, 发送内容: " + item)
 								},
 								fail: (res) => {
-									console.log(res)
+									console.log("发送失败 " + res.errMsg)
 								}
 							})
 						}, 100*(index+1))
 					})
 					var stopMessage = "AT+TIMESETOVER"
-					wx.writeBLECharacteristicValue({
-						deviceId: this.deviceId,
-						serviceId: this.primaryServiceUUID,
-						characteristicId: this.writeUUID,
-						value: this.MessageToArrayBuffer(stopMessage),
-						success: (res) => {
-							console.log(res)
-						},
-						fail: (res) => {
-							console.log(res)
-						}
-					})
+					setTimeout(() => {
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: this.MessageToArrayBuffer(stopMessage),
+							success: (res) => {
+								console.log("发送成功, 发送内容: " + stopMessage)
+							},
+							fail: (res) => {
+								console.log("发送失败 " + res.errMsg)
+							}
+						})
+					}, 100*(alarmsMessage.length+2))
 				}
 				this.uploadLoading = false
 			},
@@ -164,6 +166,7 @@
 			_self.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			_self.readUUID = getApp().globalData.readUUID
 			_self.writeUUID = getApp().globalData.writeUUID
+			console.log(_self)
 		}
 	}
 </script>

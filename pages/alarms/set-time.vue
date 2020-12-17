@@ -41,7 +41,7 @@
 			<view class="cu-item arrow">
 				<view class="content">结束时间</view>
 				<view class="action">
-					<picker mode="time" :start="startTime" end="23:59" @change="ChangeStopTime">
+					<picker mode="time" start="00:00" end="23:59" @change="ChangeStopTime">
 						<view class="picker">
 							{{stopTime}}
 						</view>
@@ -93,6 +93,13 @@
 			},
 			ChangeStopTime(e) {
 				this.stopTime = e.detail.value
+				if (this.stopTime < this.startTime) {
+					this.stopTime = this.startTime
+					wx.showToast({
+						title: "结束时间不能早于开始时间!",
+						icon: "none"
+					})
+				}
 			},
 			SelectWeekday(e) {
 				this.weekDays[e.currentTarget.id].selected = !this.weekDays[e.currentTarget.id].selected
@@ -107,25 +114,131 @@
 						tempWeekday.push(item.index)
 					}
 				})
-				if (!this.isEditing) {
-					this.alarmsInfo.push({
-						weekdays: tempWeekday,
-						volume: this.volume,
-						relayStatus: this.relayStatus,
-						startTime: this.startTime,
-						stopTime: this.stopTime,
-						isUsing: false
+				if (tempWeekday.length == 0) {
+					wx.showToast({
+						title: "未选择重复星期!",
+						icon: "none"
 					})
 				} else {
-					this.alarmsInfo[this.editingIndex].weekdays = tempWeekday
-					this.alarmsInfo[this.editingIndex].volume = this.volume
-					this.alarmsInfo[this.editingIndex].relayStatus = this.relayStatus
-					this.alarmsInfo[this.editingIndex].startTime = this.startTime
-					this.alarmsInfo[this.editingIndex].stopTime = this. stopTime
+					if (!this.isEditing) {
+						//添加的第一组定时信息直接push
+						if (this.alarmsInfo.length == 0){
+							this.alarmsInfo.push({
+								weekdays: tempWeekday,
+								volume: this.volume,
+								relayStatus: this.relayStatus,
+								startTime: this.startTime,
+								stopTime: this.stopTime,
+								isUsing: false
+							})
+						} 
+						//数组中已有其他定时信息时, 先比较先后顺序
+						else {
+							try {
+								this.alarmsInfo.forEach((alarm, index) => {
+									//如果星期一致则比较开始时间
+									if (tempWeekday[0] == alarm.weekdays[0]) {
+										if (this.startTime <= alarm.startTime) {
+											this.alarmsInfo.splice(index, 0, {
+												weekdays: tempWeekday,
+												volume: this.volume,
+												relayStatus: this.relayStatus,
+												startTime: this.startTime,
+												stopTime: this.stopTime,
+												isUsing: false,
+											})
+											throw new Error("结束比较")
+										}
+									} 
+									//比较星期
+									else if (tempWeekday[0] < alarm.weekdays[0]) {
+										this.alarmsInfo.splice(index, 0, {
+											weekdays: tempWeekday,
+											volume: this.volume,
+											relayStatus: this.relayStatus,
+											startTime: this.startTime,
+											stopTime: this.stopTime,
+											isUsing: false
+										})
+										throw new Error("结束比较")
+									} 
+									//如果是最靠后的就直接添加
+									else if (index == this.alarmsInfo.length - 1) {
+										this.alarmsInfo.push({
+											weekdays: tempWeekday,
+											volume: this.volume,
+											relayStatus: this.relayStatus,
+											startTime: this.startTime,
+											stopTime: this.stopTime,
+											isUsing: false
+										})
+									}
+								})
+							} catch(e) {
+								if (e.message != "结束比较") throw e
+							}
+						}
+					} else {
+						//如果被编辑的定时设置是唯一一组则直接赋值
+						if (this.alarmsInfo.length == 1){
+							this.alarmsInfo[this.editingIndex].weekdays = tempWeekday
+							this.alarmsInfo[this.editingIndex].volume = this.volume
+							this.alarmsInfo[this.editingIndex].relayStatus = this.relayStatus
+							this.alarmsInfo[this.editingIndex].startTime = this.startTime
+							this.alarmsInfo[this.editingIndex].stopTime = this. stopTime
+						} else {
+							//先删除之前的数组元素
+							this.alarmsInfo.splice(this.editingIndex, 1)
+							try {
+								//比较更改后的元素与数组内的先后顺序
+								this.alarmsInfo.forEach((alarm, index) => {
+									//如果星期一致则比较开始时间
+									if (tempWeekday[0] == alarm.weekdays[0]) {
+										if (this.startTime <= alarm.startTime) {
+											this.alarmsInfo.splice(index, 0, {
+												weekdays: tempWeekday,
+												volume: this.volume,
+												relayStatus: this.relayStatus,
+												startTime: this.startTime,
+												stopTime: this.stopTime,
+												isUsing: false,
+											})
+											throw new Error("结束比较")
+										}
+									} 
+									//比较星期
+									else if (tempWeekday[0] < alarm.weekdays[0]) {
+										this.alarmsInfo.splice(index, 0, {
+											weekdays: tempWeekday,
+											volume: this.volume,
+											relayStatus: this.relayStatus,
+											startTime: this.startTime,
+											stopTime: this.stopTime,
+											isUsing: false,
+										})
+										throw new Error("结束比较")
+									} 
+									//如果是最靠后的就直接添加
+									else if (index == this.alarmsInfo.length - 1) {
+										this.alarmsInfo.push({
+											weekdays: tempWeekday,
+											volume: this.volume,
+											relayStatus: this.relayStatus,
+											startTime: this.startTime,
+											stopTime: this.stopTime,
+											isUsing: false,
+										})
+									}
+								})
+							} catch(e) {
+								if (e.message != "结束比较") throw e
+							}
+						}
+					}
+					uni.navigateBack({
+						
+					})
 				}
-				uni.navigateBack({
-					
-				})
 			}
 		},
 		created() {

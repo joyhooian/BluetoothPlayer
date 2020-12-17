@@ -515,37 +515,39 @@ var _self;var _default =
           alarmsMessage.push(cmd);
         }
       });
-      console.log(this);
       if (this.primaryServiceUUID != '' && this.writeUUID != '') {
+        console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
         alarmsMessage.forEach(function (item, index) {
           setTimeout(function () {
             wx.writeBLECharacteristicValue({
-              deviceId: _this.deviceId,
+              deviceId: _this.devices[0].deviceId,
               serviceId: _this.primaryServiceUUID,
               characteristicId: _this.writeUUID,
               value: _this.MessageToArrayBuffer(item),
               success: function success(res) {
-                console.log(res);
+                console.log("发送成功, 发送内容: " + item);
               },
               fail: function fail(res) {
-                console.log(res);
+                console.log("发送失败 " + res.errMsg);
               } });
 
           }, 100 * (index + 1));
         });
         var stopMessage = "AT+TIMESETOVER";
-        wx.writeBLECharacteristicValue({
-          deviceId: this.deviceId,
-          serviceId: this.primaryServiceUUID,
-          characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(stopMessage),
-          success: function success(res) {
-            console.log(res);
-          },
-          fail: function fail(res) {
-            console.log(res);
-          } });
+        setTimeout(function () {
+          wx.writeBLECharacteristicValue({
+            deviceId: _this.devices[0].deviceId,
+            serviceId: _this.primaryServiceUUID,
+            characteristicId: _this.writeUUID,
+            value: _this.MessageToArrayBuffer(stopMessage),
+            success: function success(res) {
+              console.log("发送成功, 发送内容: " + stopMessage);
+            },
+            fail: function fail(res) {
+              console.log("发送失败 " + res.errMsg);
+            } });
 
+        }, 100 * (alarmsMessage.length + 2));
       }
       this.uploadLoading = false;
     },
@@ -565,6 +567,7 @@ var _self;var _default =
     _self.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     _self.readUUID = getApp().globalData.readUUID;
     _self.writeUUID = getApp().globalData.writeUUID;
+    console.log(_self);
   } };exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
@@ -1240,22 +1243,38 @@ var _default =
             _this.valueListen = _this.MessageToArrayBuffer(res.value);
             console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.MessageToArrayBuffer(res.value));
           });
+          setTimeout(function () {
+            wx.writeBLECharacteristicValue({
+              deviceId: _this.devices[0].deviceId,
+              serviceId: _this.primaryServiceUUID,
+              characteristicId: _this.writeUUID,
+              value: _this.MessageToArrayBuffer("AT+FILEREAD"),
+              success: function success(res) {
+                console.log("发送成功, 发送内容: AT+FILEREAD");
+              },
+              fail: function fail() {
+                console.log("发送失败");
+              } });
+
+          }, 500);
         },
         fail: function fail(res) {
           console.log("开启BLE Notify失败 " + res.errMsg);
         } });
 
-      if (this.valueListen != '') {
-        this.fileList = [];
-        var fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig, ""));
-        for (var cnt = 1; cnt <= fileNum; cnt++) {
-          this.fileList.push(cnt);
-        }
-        wx.showToast({
-          title: "成功读取" + fileNum + "个文件",
-          icon: "none" });
+      setTimeout(function () {
+        if (_this.valueListen != '') {
+          _this.fileList = [];
+          var fileNum = parseInt(_this.valueListen.replace(/[^0-9]/ig, ""));
+          for (var cnt = 1; cnt <= fileNum; cnt++) {
+            _this.fileList.push(cnt);
+          }
+          wx.showToast({
+            title: "成功读取" + fileNum + "个文件",
+            icon: "none" });
 
-      }
+        }
+      }, 1000);
       setTimeout(function () {
         _this.isDownloading = false;
       }, 1000);
@@ -1425,6 +1444,7 @@ var _default =
     this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     this.readUUID = getApp().globalData.readUUID;
     this.writeUUID = getApp().globalData.writeUUID;
+    console.log(this);
   } };exports.default = _default;
 
 /***/ }),

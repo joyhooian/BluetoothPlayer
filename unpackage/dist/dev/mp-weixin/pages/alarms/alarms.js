@@ -230,37 +230,39 @@ var _self;var _default =
           alarmsMessage.push(cmd);
         }
       });
-      console.log(this);
       if (this.primaryServiceUUID != '' && this.writeUUID != '') {
+        console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
         alarmsMessage.forEach(function (item, index) {
           setTimeout(function () {
             wx.writeBLECharacteristicValue({
-              deviceId: _this.deviceId,
+              deviceId: _this.devices[0].deviceId,
               serviceId: _this.primaryServiceUUID,
               characteristicId: _this.writeUUID,
               value: _this.MessageToArrayBuffer(item),
               success: function success(res) {
-                console.log(res);
+                console.log("发送成功, 发送内容: " + item);
               },
               fail: function fail(res) {
-                console.log(res);
+                console.log("发送失败 " + res.errMsg);
               } });
 
           }, 100 * (index + 1));
         });
         var stopMessage = "AT+TIMESETOVER";
-        wx.writeBLECharacteristicValue({
-          deviceId: this.deviceId,
-          serviceId: this.primaryServiceUUID,
-          characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(stopMessage),
-          success: function success(res) {
-            console.log(res);
-          },
-          fail: function fail(res) {
-            console.log(res);
-          } });
+        setTimeout(function () {
+          wx.writeBLECharacteristicValue({
+            deviceId: _this.devices[0].deviceId,
+            serviceId: _this.primaryServiceUUID,
+            characteristicId: _this.writeUUID,
+            value: _this.MessageToArrayBuffer(stopMessage),
+            success: function success(res) {
+              console.log("发送成功, 发送内容: " + stopMessage);
+            },
+            fail: function fail(res) {
+              console.log("发送失败 " + res.errMsg);
+            } });
 
+        }, 100 * (alarmsMessage.length + 2));
       }
       this.uploadLoading = false;
     },
@@ -280,6 +282,7 @@ var _self;var _default =
     _self.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     _self.readUUID = getApp().globalData.readUUID;
     _self.writeUUID = getApp().globalData.writeUUID;
+    console.log(_self);
   } };exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 

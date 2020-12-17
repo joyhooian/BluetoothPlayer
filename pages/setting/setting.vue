@@ -77,22 +77,38 @@
 							this.valueListen = this.MessageToArrayBuffer(res.value)
 							console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + this.MessageToArrayBuffer(res.value))
 						})
+						setTimeout(() => {
+							wx.writeBLECharacteristicValue({
+								deviceId: this.devices[0].deviceId,
+								serviceId: this.primaryServiceUUID,
+								characteristicId: this.writeUUID,
+								value: this.MessageToArrayBuffer("AT+FILEREAD"),
+								success: (res) => {
+									console.log("发送成功, 发送内容: AT+FILEREAD")
+								},
+								fail: () => {
+									console.log("发送失败")
+								}
+							})
+						}, 500)
 					},
 					fail: (res) => {
 						console.log("开启BLE Notify失败 " + res.errMsg)
 					}
 				})
-				if (this.valueListen != '') {
-					this.fileList = []
-					let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
-					for (let cnt = 1 ; cnt <= fileNum; cnt++) {
-						this.fileList.push(cnt)
+				setTimeout(() => {
+					if (this.valueListen != '') {
+						this.fileList = []
+						let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
+						for (let cnt = 1 ; cnt <= fileNum; cnt++) {
+							this.fileList.push(cnt)
+						}
+						wx.showToast({
+							title: "成功读取" + fileNum + "个文件",
+							icon: "none"
+						})
 					}
-					wx.showToast({
-						title: "成功读取" + fileNum + "个文件",
-						icon: "none"
-					})
-				}
+				}, 1000)
 				setTimeout(() => {
 					this.isDownloading = false
 				}, 1000)
@@ -262,6 +278,7 @@
 			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			this.readUUID = getApp().globalData.readUUID
 			this.writeUUID = getApp().globalData.writeUUID
+			console.log(this)
 		}
 	}
 </script>
