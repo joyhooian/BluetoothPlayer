@@ -46,7 +46,8 @@
 				isLoading: false,
 				volume: 15,
 				relayStatus: false,
-				secAfter: 0
+				secAfter: 0,
+				timeAfterInfo: {}
 			}
 		},
 		methods: {
@@ -66,39 +67,43 @@
 						icon: "none"
 					})
 				} else if (this.secAfter <= 9999) {
-					this.isLoading = true
-					var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
-					"V" + (this.volume<10?'0'+this.volume:this.volume) +
-					"J" + (this.relayStatus?"01":"00")
-					console.log(cmd)
-					setTimeout(() => {
-						wx.writeBLECharacteristicValue({
-							deviceId: this.devices[0].deviceId,
-							serviceId: this.primaryServiceUUID,
-							characteristicId: this.writeUUID,
-							value: this.MessageToArrayBuffer(cmd),
-							success: (res) => {
-								console.log("发送成功, 发送内容:" + cmd)
-								wx.showToast({
-									title: "发送成功",
-									icon: "none"
-								})
-							},
-							fail: () => {
-								console.log("发送失败")
-								wx.showToast({
-									title: "发送失败",
-									icon: "none"
-								})
-							}
-						})
-					}, 100)
+					this.timeAfterInfo.volume = this.volume
+					this.timeAfterInfo.relayStatus = this.relayStatus
+					this.timeAfterInfo.secAfter = this.secAfter
+					getApp().globalData.alarmShow.isTimeAfter  = true
+					getApp().globalData.alarmShow.isSetTime = false
+					// this.isLoading = true
+					// var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
+					// "V" + (this.volume<10?'0'+this.volume:this.volume) +
+					// "J" + (this.relayStatus?"01":"00")
+					// console.log(cmd)
+					// setTimeout(() => {
+					// 	wx.writeBLECharacteristicValue({
+					// 		deviceId: this.devices[0].deviceId,
+					// 		serviceId: this.primaryServiceUUID,
+					// 		characteristicId: this.writeUUID,
+					// 		value: this.MessageToArrayBuffer(cmd),
+					// 		success: (res) => {
+					// 			console.log("发送成功, 发送内容:" + cmd)
+					// 			wx.showToast({
+					// 				title: "发送成功",
+					// 				icon: "none"
+					// 			})
+					// 		},
+					// 		fail: () => {
+					// 			console.log("发送失败")
+					// 			wx.showToast({
+					// 				title: "发送失败",
+					// 				icon: "none"
+					// 			})
+					// 		}
+					// 	})
+					// }, 100)
 					console.log(this.volume)
 					console.log(this.relayStatus)
 					console.log(this.secAfter)
-					setTimeout(() => {
-						this.isLoading = false
-					}, 1000)
+					console.log(this.timeAfterInfo)
+					uni.navigateBack()
 				} else if (this.secAfter > 9999) {
 					this.secAfter = 9999
 					wx.showToast({
@@ -113,6 +118,7 @@
 			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			this.readUUID = getApp().globalData.readUUID
 			this.writeUUID = getApp().globalData.writeUUID
+			this.timeAfterInfo = getApp().globalData.timeAfterInfo
 			console.log(this)
 		}
 	}

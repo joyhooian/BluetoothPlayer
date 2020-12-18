@@ -243,6 +243,7 @@ var _self;var _default =
                                       value: _self.uploadTime(),
                                       success: function success(res) {
                                         console.log("发送成功 " + res.errMsg);
+                                        console.log(res);
                                       },
                                       fail: function fail(res) {
                                         console.log("发送失败 " + res.errMsg);

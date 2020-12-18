@@ -267,37 +267,36 @@ var _default =
 
         } });
 
-      this.isSettingLight = false;
     },
     Mute: function Mute() {var _this2 = this;
       if (this.isMuted) {
         this.isMuted = false;
         getApp().globalData.isMuted = this.isMuted;
         console.log("取消静音");
-        // var message = "AT+MUTE"
-        // wx.writeBLECharacteristicValue({
-        // 	deviceId: this.devices[0].deviceId,
-        // 	serviceId: this.primaryServiceUUID,
-        // 	characteristicId: this.writeUUID,
-        // 	value: this.MessageToArrayBuffer(message),
-        // 	success: (res) => {
-        // 		console.log("发送数据成功 " + res.errMsg)
-        // 		wx.showToast({
-        // 			title: "静音成功",
-        // 			icon: "none"
-        // 		})
-        // 	},
-        // 	fail: (res) => {
-        // 		console.log("发送数据失败 " + res.errMsg)
-        // 		wx.showToast({
-        // 			title: "静音失败",
-        // 			icon: "none"
-        // 		})
-        // 	}
-        // })
+        var message = "AT+MUTEDIS";
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: this.MessageToArrayBuffer(message),
+          success: function success(res) {
+            console.log("发送数据成功 " + res.errMsg);
+            wx.showToast({
+              title: "取消静音成功",
+              icon: "none" });
+
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败 " + res.errMsg);
+            wx.showToast({
+              title: "取消静音失败",
+              icon: "none" });
+
+          } });
+
       } else {
         console.log("静音");
-        var message = "AT+MUTE";
+        var message = "AT+MUTEEN";
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,

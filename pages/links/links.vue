@@ -127,6 +127,7 @@
 																				value: _self.uploadTime(),
 																				success: (res) => {
 																					console.log("发送成功 " + res.errMsg)
+																					console.log(res)
 																				},
 																				fail: (res) => {
 																					console.log("发送失败 " + res.errMsg)

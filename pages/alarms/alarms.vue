@@ -11,7 +11,7 @@
 				<button class="cu-btn round lines-white" @click="Navigate" id="time-after"><text class="text-black text-lg">+间隔播放</text></button>
 			</view>
 		</view>
-		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
+		<view v-if="alarmShow.isSetTime" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu card-menu margin-top sm-border" v-for="(item, index) in alarmsInfo" :key="index">
 				<view class="cu-item">
 					<view class="centent">{{"编号 " + (index + 1)}}</view>
@@ -42,6 +42,21 @@
 					<view class="action">
 						<switch @change="ChagngUsing" :id="index"></switch>
 					</view>
+				</view>
+			</view>
+		</view>
+		<view v-if="alarmShow.isTimeAfter" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
+			<view class="cu-list menu card-menu margin-top sm-border">
+				<view class="cu-item">
+					<view class="centent">间隔播放</view>
+				</view>
+				<view class="cu-item">
+					<view class="centent">{{"音量" + timeAfterInfo.volume}}</view>
+					<view class="action">{{timeAfterInfo.relayStatus?"继电器开":"继电器关"}}</view>
+				</view>
+				<view class="cu-item">
+					<view class="centent">间隔时间</view>
+					<view class="action">{{timeAfterInfo.secAfter + "S"}}</view>
 				</view>
 			</view>
 		</view>
@@ -76,6 +91,8 @@
 				//	volum: number,
 				//	weekdays: [0, 1, 2]
 				//}]
+				alarmShow: {},
+				timeAfterInfo: {},
 				weekdaysString: [ 
 					{index: 0, string: '周一'},
 					{index: 1, string: '周二'},
@@ -101,53 +118,113 @@
 			},
 			uploadData() {
 				this.uploadLoading = true
-				var alarmsMessage = new Array
-				this.alarmsInfo.forEach((alarm, index) => {
-					if (alarm.isUsing) {
-						var cmd = "AT+TIMESET" + ((index+1)<10?'0'+(index+1):(index+1)) +
-						'T' + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') +
-						'V' + (alarm.volume<10?'0'+alarm.volume:alarm.volume) +
-						'J' + (alarm.relayStatus?'01':'00')
-						alarm.weekdays.forEach((weekday) => {
-							cmd += 'W' + '0' + (weekday + 1)
+				console.log(this.alarmShow)
+				if (this.alarmShow.isSetTime) {
+					console.log("上传时间设定")
+					let alarmsMessage = new Array
+					this.alarmsInfo.forEach((alarm, index) => {
+						if (alarm.isUsing) {
+							let cmdGroup = new Array
+							cmdGroup.push("AT+TMST" + ('0'+(index+1)).slice(-2) + "E1")
+							cmdGroup.push("AT+TMST" + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') + 'E1') 
+							cmdGroup.push("AT+TMSTV" + ('0'+alarm.volume).slice(-2) + 'E1')
+							cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus?'01':'00') + 'E1')
+							let weekdaysString = 'AT+TMSTW'
+							alarm.weekdays.forEach((weekday)=>{
+								weekdaysString += (weekday+1)
+							})
+							weekdaysString += "E0"
+							cmdGroup.push(weekdaysString)
+							console.log(cmdGroup)
+							alarmsMessage.push(cmdGroup)
+							// let cmd = "AT+TIMESET" + ((index+1)<10?'0'+(index+1):(index+1)) +
+							// 'T' + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') +
+							// 'V' + (alarm.volume<10?'0'+alarm.volume:alarm.volume) +
+							// 'J' + (alarm.relayStatus?'01':'00')
+							// alarm.weekdays.forEach((weekday) => {
+							// 	cmd += 'W' + '0' + (weekday + 1)
+							// })
+							// alarmsMessage.push(cmd)
+						}
+					})
+					if (alarmsMessage.length == 0)
+					{
+						wx.showToast({
+							title: "请启用要设置的任务!",
+							icon: "none"
 						})
-						alarmsMessage.push(cmd)
-					}
-				})
-				if (this.primaryServiceUUID != '' && this.writeUUID != ''){
-					console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
-					alarmsMessage.forEach((item, index) => {
+					} else if (this.primaryServiceUUID != '' && this.writeUUID != ''){
+						console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
+						alarmsMessage.forEach((msg, index) => {
+							msg.forEach((cmd, cmdNum) => {
+								setTimeout(() => {
+									wx.writeBLECharacteristicValue({
+										deviceId: this.devices[0].deviceId,
+										serviceId: this.primaryServiceUUID,
+										characteristicId: this.writeUUID,
+										value: this.MessageToArrayBuffer(cmd),
+										success: (res) => {
+											console.log("发送成功, 发送内容: " + cmd)
+											let sec = new Date().getSeconds()
+											let ms = new Date().getMilliseconds()
+											console.log(sec + ":" + ms)
+										},
+										fail: (res) => {
+											console.log("发送失败")
+										}
+									})
+								}, 5000*index + 1000*cmdNum)
+							})
+						})
+						var stopMessage = "AT+TIMESETOVER"
 						setTimeout(() => {
 							wx.writeBLECharacteristicValue({
 								deviceId: this.devices[0].deviceId,
 								serviceId: this.primaryServiceUUID,
 								characteristicId: this.writeUUID,
-								value: this.MessageToArrayBuffer(item),
+								value: this.MessageToArrayBuffer(stopMessage),
 								success: (res) => {
-									console.log("发送成功, 发送内容: " + item)
+									console.log("发送成功, 发送内容: " + stopMessage)
+									let sec = new Date().getSeconds()
+									let ms = new Date().getMilliseconds()
+									console.log(sec + ":" + ms)
 								},
 								fail: (res) => {
 									console.log("发送失败 " + res.errMsg)
 								}
 							})
-						}, 100*(index+1))
-					})
-					var stopMessage = "AT+TIMESETOVER"
-					setTimeout(() => {
-						wx.writeBLECharacteristicValue({
-							deviceId: this.devices[0].deviceId,
-							serviceId: this.primaryServiceUUID,
-							characteristicId: this.writeUUID,
-							value: this.MessageToArrayBuffer(stopMessage),
-							success: (res) => {
-								console.log("发送成功, 发送内容: " + stopMessage)
-							},
-							fail: (res) => {
-								console.log("发送失败 " + res.errMsg)
-							}
-						})
-					}, 100*(alarmsMessage.length+2))
-				}
+						}, 5000*(alarmsMessage.length))
+					} 
+				} else if (this.alarmShow.isTimeAfter) {
+						console.log("上传间隔时间")
+						let cmd = "AT+TIMEJG" + ("0000" + this.timeAfterInfo.secAfter).slice(-4) +
+						"V" + (this.volume<10?'0'+this.timeAfterInfo.volume:this.timeAfterInfo.volume) +
+						"J" + (this.timeAfterInfo.relayStatus?"01":"00")
+						console.log(cmd)
+						console.log(this.MessageToArrayBuffer(cmd))
+						setTimeout(() => {
+							wx.writeBLECharacteristicValue({
+								deviceId: this.devices[0].deviceId,
+								serviceId: this.primaryServiceUUID,
+								characteristicId: this.writeUUID,
+								value: this.MessageToArrayBuffer(cmd),
+								success: (res) => {
+									console.log("发送成功, 发送内容:" + cmd)
+									wx.showToast({
+										title: "发送成功",
+										icon: "none"
+									})
+								},
+								fail: () => {
+									console.log("发送失败")
+									wx.showToast({
+										title: "发送失败",
+										icon: "none"
+									})
+								}
+							})
+						}, 500)
+					}
 				this.uploadLoading = false
 			},
 			ChagngUsing(e) {
@@ -166,8 +243,11 @@
 			_self.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			_self.readUUID = getApp().globalData.readUUID
 			_self.writeUUID = getApp().globalData.writeUUID
+			_self.alarmShow = getApp().globalData.alarmShow
+			_self.timeAfterInfo = getApp().globalData.timeAfterInfo
 			console.log(_self)
-		}
+		},
+		
 	}
 </script>
 

@@ -122,12 +122,21 @@ var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 2));function _i
     tempFile: [],
     musicInfo: [],
     alarmsInfo: [],
+    timeAfterInfo: {
+      volume: 0,
+      relayStatus: false,
+      secAfter: 0 },
+
     curMusic: 0,
     innerAudioContext: null,
     isPlaying: false,
     isMuted: false,
     isSingle: false,
-    isAll: false },
+    isAll: false,
+    alarmShow: {
+      isSetTime: false,
+      isTimeAfter: false } },
+
 
   onLaunch: function onLaunch() {
     _vue.default.prototype.dosomething = function (e) {
@@ -460,6 +469,21 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 var _self;var _default =
 {
@@ -481,6 +505,8 @@ var _self;var _default =
       //	volum: number,
       //	weekdays: [0, 1, 2]
       //}]
+      alarmShow: {},
+      timeAfterInfo: {},
       weekdaysString: [
       { index: 0, string: '周一' },
       { index: 1, string: '周二' },
@@ -506,52 +532,112 @@ var _self;var _default =
     },
     uploadData: function uploadData() {var _this = this;
       this.uploadLoading = true;
-      var alarmsMessage = new Array();
-      this.alarmsInfo.forEach(function (alarm, index) {
-        if (alarm.isUsing) {
-          var cmd = "AT+TIMESET" + (index + 1 < 10 ? '0' + (index + 1) : index + 1) +
-          'T' + alarm.startTime.replace(':', '') + alarm.stopTime.replace(':', '') +
-          'V' + (alarm.volume < 10 ? '0' + alarm.volume : alarm.volume) +
-          'J' + (alarm.relayStatus ? '01' : '00');
-          alarm.weekdays.forEach(function (weekday) {
-            cmd += 'W' + '0' + (weekday + 1);
+      console.log(this.alarmShow);
+      if (this.alarmShow.isSetTime) {
+        console.log("上传时间设定");
+        var alarmsMessage = new Array();
+        this.alarmsInfo.forEach(function (alarm, index) {
+          if (alarm.isUsing) {
+            var cmdGroup = new Array();
+            cmdGroup.push("AT+TMST" + ('0' + (index + 1)).slice(-2) + "E1");
+            cmdGroup.push("AT+TMST" + alarm.startTime.replace(':', '') + alarm.stopTime.replace(':', '') + 'E1');
+            cmdGroup.push("AT+TMSTV" + ('0' + alarm.volume).slice(-2) + 'E1');
+            cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus ? '01' : '00') + 'E1');
+            var weekdaysString = 'AT+TMSTW';
+            alarm.weekdays.forEach(function (weekday) {
+              weekdaysString += weekday + 1;
+            });
+            weekdaysString += "E0";
+            cmdGroup.push(weekdaysString);
+            console.log(cmdGroup);
+            alarmsMessage.push(cmdGroup);
+            // let cmd = "AT+TIMESET" + ((index+1)<10?'0'+(index+1):(index+1)) +
+            // 'T' + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') +
+            // 'V' + (alarm.volume<10?'0'+alarm.volume:alarm.volume) +
+            // 'J' + (alarm.relayStatus?'01':'00')
+            // alarm.weekdays.forEach((weekday) => {
+            // 	cmd += 'W' + '0' + (weekday + 1)
+            // })
+            // alarmsMessage.push(cmd)
+          }
+        });
+        if (alarmsMessage.length == 0)
+        {
+          wx.showToast({
+            title: "请启用要设置的任务!",
+            icon: "none" });
+
+        } else if (this.primaryServiceUUID != '' && this.writeUUID != '') {
+          console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
+          alarmsMessage.forEach(function (msg, index) {
+            msg.forEach(function (cmd, cmdNum) {
+              setTimeout(function () {
+                wx.writeBLECharacteristicValue({
+                  deviceId: _this.devices[0].deviceId,
+                  serviceId: _this.primaryServiceUUID,
+                  characteristicId: _this.writeUUID,
+                  value: _this.MessageToArrayBuffer(cmd),
+                  success: function success(res) {
+                    console.log("发送成功, 发送内容: " + cmd);
+                    var sec = new Date().getSeconds();
+                    var ms = new Date().getMilliseconds();
+                    console.log(sec + ":" + ms);
+                  },
+                  fail: function fail(res) {
+                    console.log("发送失败");
+                  } });
+
+              }, 5000 * index + 1000 * cmdNum);
+            });
           });
-          alarmsMessage.push(cmd);
-        }
-      });
-      if (this.primaryServiceUUID != '' && this.writeUUID != '') {
-        console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
-        alarmsMessage.forEach(function (item, index) {
+          var stopMessage = "AT+TIMESETOVER";
           setTimeout(function () {
             wx.writeBLECharacteristicValue({
               deviceId: _this.devices[0].deviceId,
               serviceId: _this.primaryServiceUUID,
               characteristicId: _this.writeUUID,
-              value: _this.MessageToArrayBuffer(item),
+              value: _this.MessageToArrayBuffer(stopMessage),
               success: function success(res) {
-                console.log("发送成功, 发送内容: " + item);
+                console.log("发送成功, 发送内容: " + stopMessage);
+                var sec = new Date().getSeconds();
+                var ms = new Date().getMilliseconds();
+                console.log(sec + ":" + ms);
               },
               fail: function fail(res) {
                 console.log("发送失败 " + res.errMsg);
               } });
 
-          }, 100 * (index + 1));
-        });
-        var stopMessage = "AT+TIMESETOVER";
+          }, 5000 * alarmsMessage.length);
+        }
+      } else if (this.alarmShow.isTimeAfter) {
+        console.log("上传间隔时间");
+        var cmd = "AT+TIMEJG" + ("0000" + this.timeAfterInfo.secAfter).slice(-4) +
+        "V" + (this.volume < 10 ? '0' + this.timeAfterInfo.volume : this.timeAfterInfo.volume) +
+        "J" + (this.timeAfterInfo.relayStatus ? "01" : "00");
+        console.log(cmd);
+        console.log(this.MessageToArrayBuffer(cmd));
         setTimeout(function () {
           wx.writeBLECharacteristicValue({
             deviceId: _this.devices[0].deviceId,
             serviceId: _this.primaryServiceUUID,
             characteristicId: _this.writeUUID,
-            value: _this.MessageToArrayBuffer(stopMessage),
+            value: _this.MessageToArrayBuffer(cmd),
             success: function success(res) {
-              console.log("发送成功, 发送内容: " + stopMessage);
+              console.log("发送成功, 发送内容:" + cmd);
+              wx.showToast({
+                title: "发送成功",
+                icon: "none" });
+
             },
-            fail: function fail(res) {
-              console.log("发送失败 " + res.errMsg);
+            fail: function fail() {
+              console.log("发送失败");
+              wx.showToast({
+                title: "发送失败",
+                icon: "none" });
+
             } });
 
-        }, 100 * (alarmsMessage.length + 2));
+        }, 500);
       }
       this.uploadLoading = false;
     },
@@ -571,6 +657,8 @@ var _self;var _default =
     _self.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     _self.readUUID = getApp().globalData.readUUID;
     _self.writeUUID = getApp().globalData.writeUUID;
+    _self.alarmShow = getApp().globalData.alarmShow;
+    _self.timeAfterInfo = getApp().globalData.timeAfterInfo;
     console.log(_self);
   } };exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
@@ -1333,37 +1421,36 @@ var _default =
 
         } });
 
-      this.isSettingLight = false;
     },
     Mute: function Mute() {var _this2 = this;
       if (this.isMuted) {
         this.isMuted = false;
         getApp().globalData.isMuted = this.isMuted;
         console.log("取消静音");
-        // var message = "AT+MUTE"
-        // wx.writeBLECharacteristicValue({
-        // 	deviceId: this.devices[0].deviceId,
-        // 	serviceId: this.primaryServiceUUID,
-        // 	characteristicId: this.writeUUID,
-        // 	value: this.MessageToArrayBuffer(message),
-        // 	success: (res) => {
-        // 		console.log("发送数据成功 " + res.errMsg)
-        // 		wx.showToast({
-        // 			title: "静音成功",
-        // 			icon: "none"
-        // 		})
-        // 	},
-        // 	fail: (res) => {
-        // 		console.log("发送数据失败 " + res.errMsg)
-        // 		wx.showToast({
-        // 			title: "静音失败",
-        // 			icon: "none"
-        // 		})
-        // 	}
-        // })
+        var message = "AT+MUTEDIS";
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: this.MessageToArrayBuffer(message),
+          success: function success(res) {
+            console.log("发送数据成功 " + res.errMsg);
+            wx.showToast({
+              title: "取消静音成功",
+              icon: "none" });
+
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败 " + res.errMsg);
+            wx.showToast({
+              title: "取消静音失败",
+              icon: "none" });
+
+          } });
+
       } else {
         console.log("静音");
-        var message = "AT+MUTE";
+        var message = "AT+MUTEEN";
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,

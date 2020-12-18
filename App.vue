@@ -9,12 +9,21 @@
 			tempFile: [],
 			musicInfo: [],
 			alarmsInfo:[],
+			timeAfterInfo: {
+				volume: 0,
+				relayStatus: false,
+				secAfter: 0
+			},
 			curMusic: 0,
 			innerAudioContext: null,
 			isPlaying: false,
 			isMuted: false,
 			isSingle: false,
-			isAll: false
+			isAll: false,
+			alarmShow: {
+				isSetTime: false,
+				isTimeAfter: false
+			}
 		},
 		onLaunch: function() {
 			Vue.prototype.dosomething = (e) => {

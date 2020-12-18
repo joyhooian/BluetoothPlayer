@@ -128,7 +128,7 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
 //
 //
 //
@@ -176,7 +176,8 @@ var _default =
       isLoading: false,
       volume: 15,
       relayStatus: false,
-      secAfter: 0 };
+      secAfter: 0,
+      timeAfterInfo: {} };
 
   },
   methods: {
@@ -189,46 +190,50 @@ var _default =
     onInput: function onInput(e) {
       this.secAfter = e.detail.value;
     },
-    upload: function upload() {var _this = this;
+    upload: function upload() {
       if (this.secAfter == 0) {
         wx.showToast({
           title: "请输入间隔时间!",
           icon: "none" });
 
       } else if (this.secAfter <= 9999) {
-        this.isLoading = true;
-        var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
-        "V" + (this.volume < 10 ? '0' + this.volume : this.volume) +
-        "J" + (this.relayStatus ? "01" : "00");
-        console.log(cmd);
-        setTimeout(function () {
-          wx.writeBLECharacteristicValue({
-            deviceId: _this.devices[0].deviceId,
-            serviceId: _this.primaryServiceUUID,
-            characteristicId: _this.writeUUID,
-            value: _this.MessageToArrayBuffer(cmd),
-            success: function success(res) {
-              console.log("发送成功, 发送内容:" + cmd);
-              wx.showToast({
-                title: "发送成功",
-                icon: "none" });
-
-            },
-            fail: function fail() {
-              console.log("发送失败");
-              wx.showToast({
-                title: "发送失败",
-                icon: "none" });
-
-            } });
-
-        }, 100);
+        this.timeAfterInfo.volume = this.volume;
+        this.timeAfterInfo.relayStatus = this.relayStatus;
+        this.timeAfterInfo.secAfter = this.secAfter;
+        getApp().globalData.alarmShow.isTimeAfter = true;
+        getApp().globalData.alarmShow.isSetTime = false;
+        // this.isLoading = true
+        // var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
+        // "V" + (this.volume<10?'0'+this.volume:this.volume) +
+        // "J" + (this.relayStatus?"01":"00")
+        // console.log(cmd)
+        // setTimeout(() => {
+        // 	wx.writeBLECharacteristicValue({
+        // 		deviceId: this.devices[0].deviceId,
+        // 		serviceId: this.primaryServiceUUID,
+        // 		characteristicId: this.writeUUID,
+        // 		value: this.MessageToArrayBuffer(cmd),
+        // 		success: (res) => {
+        // 			console.log("发送成功, 发送内容:" + cmd)
+        // 			wx.showToast({
+        // 				title: "发送成功",
+        // 				icon: "none"
+        // 			})
+        // 		},
+        // 		fail: () => {
+        // 			console.log("发送失败")
+        // 			wx.showToast({
+        // 				title: "发送失败",
+        // 				icon: "none"
+        // 			})
+        // 		}
+        // 	})
+        // }, 100)
         console.log(this.volume);
         console.log(this.relayStatus);
         console.log(this.secAfter);
-        setTimeout(function () {
-          _this.isLoading = false;
-        }, 1000);
+        console.log(this.timeAfterInfo);
+        uni.navigateBack();
       } else if (this.secAfter > 9999) {
         this.secAfter = 9999;
         wx.showToast({
@@ -243,8 +248,10 @@ var _default =
     this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     this.readUUID = getApp().globalData.readUUID;
     this.writeUUID = getApp().globalData.writeUUID;
+    this.timeAfterInfo = getApp().globalData.timeAfterInfo;
     console.log(this);
   } };exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
 /***/ })
 

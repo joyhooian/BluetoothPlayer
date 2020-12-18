@@ -367,6 +367,8 @@ var _default =
             }
           }
         }
+        getApp().globalData.alarmShow.isSetTime = true;
+        getApp().globalData.alarmShow.isTimeAfter = false;
         uni.navigateBack({});
 
 
