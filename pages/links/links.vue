@@ -36,49 +36,45 @@
 		name: "links",
 		data() {
 			return {
-				primaryServiceUUID: '',
-				readUUID: '',
-				writeUUID: '',
+				primaryServiceUUID: '',	//主服务UUID
+				readUUID: '', //通知UUID
+				writeUUID: '', //写入UUID
 				searchingLoading: false,
-				devices: [
-					// {
-					// 	name: "",
-					// 	deviceId: null,
-					// 	service: [{
-					// 		serviceUuid: null,
-					// 		characteristics: []
-					// 	},
-					// 	status: null
-					// }]
-				]
+				devices: []
 			};
 		},
 		methods: {
+			//获取北京时间, 并截取小时分钟, 同时格式化
 			getTime() {
 				var time = new Date().toString().split(" ")[4].substr(0, 5).replace(":", "")
 				return time
 			},
+			//通过AT指令上传时间, 指令格式AT+TIMECRC12001201
 			uploadTime() {
 				var message = 'AT+TIMECRC' + _self.getTime()
 				var messageBuffer = this.MessageToArrayBuffer(message)
 				return messageBuffer
 			},
 			autoLinkDevice() {
+				//查看蓝牙适配器状态
 				wx.getBluetoothAdapterState({
 					success: (res) => {
 						if (res.available){
 							_self.searchingLoading = true
+							//打开[蓝牙发现]
 							wx.startBluetoothDevicesDiscovery({
 								success: (res) => {
+									//设置延时3s以搜索周围设备
 									setTimeout(() => {
+										//获取[设备信息]
 										wx.getBluetoothDevices({
 											success: (res) => {
 												console.log('搜索设备数目' + res.devices.length)
 												console.log('设备信息\n')
 												res.devices.forEach((item, index) => {
 													console.log(item)
+													//发现有名为[JHY-SMART001]的设备时尝试链接
 													if (item.name == "JHY-SMART001"){
-													//if (item.name == "Mi Air2"){
 														wx.createBLEConnection({
 															deviceId: item.deviceId,
 															success: (res) => {
@@ -87,6 +83,7 @@
 																	title: '设备' + item.name + '已连接',
 																	icon: 'none'
 																})
+																//保证重复连接时只出现一个设备
 																_self.devices.splice(0, _self.devices.length)
 																_self.devices.push({
 																	name:item.name,
@@ -95,15 +92,16 @@
 																	avatar: 'static/bluetooth_con.png',
 																	services: []
 																})
-																console.log(this)
 																_self.isConnected = true
 																_self.devices.forEach((device, i) => {
+																	//获取连接的设备的服务列表
 																	wx.getBLEDeviceServices({
 																		deviceId: device.deviceId,
 																		success: (res) => {
 																			console.log(res)
 																			device.services = res.services
 																			device.services.forEach((service) => {
+																				//获取所有服务下的特征值
 																				wx.getBLEDeviceCharacteristics({
 																					deviceId: device.deviceId,
 																					serviceId: service.uuid,
@@ -116,10 +114,12 @@
 																	})
 																})
 																setTimeout(() => {
+																	//保存指定的服务及其特征值
 																	_self.SaveUUID()
 																	console.log("UUDI: " + _self.primaryServiceUUID + " write: " + _self.writeUUID)
 																	if (_self.primaryServiceUUID != '' && _self.writeUUID != '') {
 																		setTimeout(() => {
+																			//写特征值操作
 																			wx.writeBLECharacteristicValue({
 																				deviceId: _self.devices[0].deviceId,
 																				serviceId: _self.primaryServiceUUID,
@@ -136,7 +136,7 @@
 																		}, 1000)
 																	}
 																},1000)
-																console.log(_self)
+																//关闭[蓝牙发现]以节省系统资源
 																wx.stopBluetoothDevicesDiscovery()
 																_self.searchingLoading = false
 															},
@@ -153,6 +153,7 @@
 												})
 											},
 											complete: () => {
+												//关闭[蓝牙发现]以节省系统资源
 												wx.stopBluetoothDevicesDiscovery()
 												setTimeout(() => {
 													_self.searchingLoading = false
@@ -162,6 +163,7 @@
 									}, 3000)
 								},
 								fail: (res) => {
+									//关闭[蓝牙发现]以节省系统资源
 									wx.stopBluetoothDevicesDiscovery()
 								}
 							})
@@ -181,11 +183,15 @@
 					}
 				})
 			},
+			//断开设备连接
 			disconnectDevice(e){
+				//如果设备是连接状态
 				if (_self.devices[e.currentTarget.id].status == "connected"){
 					_self.devices[e.currentTarget.id].status = "changingStatus"
+					//断开BLE设备连接
 					wx.closeBLEConnection({
 						deviceId: _self.devices[e.currentTarget.id].deviceId,
+						//断开成功
 						success: () => {
 							_self.devices[e.currentTarget.id].status = "disconnected"
 							console.log("已断开")
@@ -195,6 +201,7 @@
 							})
 							_self.devices[e.currentTarget.id].avatar = 'static/bluetooth.png' 
 						},
+						//断开失败
 						fail: () => {
 							_self.devices[e.currentTarget.id].status = "connected"
 							console.log("断开失败")
@@ -205,8 +212,10 @@
 						}
 					})
 				}
+				//如果设备处于断开状态
 				else if (_self.devices[e.currentTarget.id].status == "disconnected"){
 					_self.devices[e.currentTarget.id].status = "changingStatus"
+					//蓝牙连接BLE设备
 					wx.createBLEConnection({
 						deviceId: _self.devices[e.currentTarget.id].deviceId,
 						success: () => {
@@ -217,6 +226,7 @@
 								icon: 'none'
 							})
 							_self.devices[e.currentTarget.id].avatar = 'static/bluetooth_con.png' 
+							//重新手动连接成功后下发时间信息
 							setTimeout(() => {
 								wx.writeBLECharacteristicValue({
 									deviceId: this.devices[0].deviceId,
@@ -243,22 +253,22 @@
 					})
 				}
 			},
-			hideModal() {
-				_self.bottomInfoIsShow = false
-			},
 			SaveUUID() {
+				//遍历设备服务树, 以全局变量保存需要的服务UUID和特征值UUID
 				_self.devices[0].services.forEach((service, i) => {
 					if (service.uuid.split("-")[0].indexOf('FF00') != -1){
-					//if (service.uuid.split("-")[0].indexOf('AF00') != -1){
 						_self.primaryServiceUUID = service.uuid
+						//保存全局变量-服务UUID
 						getApp().globalData.primaryServiceUUID = service.uuid
 						service.characteristics.forEach((characteristic) => {
-							if (characteristic.uuid.split("-")[0].indexOf("01") != -1){
+							if (characteristic.uuid.split("-")[0].indexOf("03") != -1){
 								_self.readUUID = characteristic.uuid
+								//保存全局变量-特征值UUID
 								getApp().globalData.readUUID = characteristic.uuid
 							}
 							if (characteristic.uuid.split("-")[0].indexOf("02") != -1){
 								_self.writeUUID = characteristic.uuid
+								//保存全局变量-特征值UUID
 								getApp().globalData.writeUUID = characteristic.uuid
 							}
 						})
@@ -276,8 +286,7 @@
 			_self.writeUUID = getApp().globalData.writeUUID
 		},
 		mounted() {
-			_self.uploadTime()
-			_self.getTime(),
+			//页面挂载后打开蓝牙适配器
 			wx.getBluetoothAdapterState({
 				success: (res) => {
 					if (res.available == false){

@@ -1,3 +1,4 @@
+<!-- 间隔时间设置页面 -->
 <template>
 	<view>
 		<cu-custom bgColor="bg-gradual-red" isBack="true">
@@ -51,60 +52,41 @@
 			}
 		},
 		methods: {
+			//改变继电器状态
 			RelayChange(e){
 				this.relayStatus = e.detail.value
 			},
+			//改变音量
 			changeVolume(e){
 				this.volume = e.detail.value
 			},
+			//输入时间间隔
 			onInput(e) {
 				this.secAfter = e.detail.value
 			},
+			//保存设置
 			upload(){
+				//如果没有设置时间间隔则提示
 				if (this.secAfter == 0){
 					wx.showToast({
 						title: "请输入间隔时间!",
 						icon: "none"
 					})
-				} else if (this.secAfter <= 9999) {
+				} 
+				else if (this.secAfter <= 9999) {
 					this.timeAfterInfo.volume = this.volume
 					this.timeAfterInfo.relayStatus = this.relayStatus
 					this.timeAfterInfo.secAfter = this.secAfter
 					getApp().globalData.alarmShow.isTimeAfter  = true
 					getApp().globalData.alarmShow.isSetTime = false
-					// this.isLoading = true
-					// var cmd = "AT+TIMEJG" + ("0000" + this.secAfter).slice(-4) +
-					// "V" + (this.volume<10?'0'+this.volume:this.volume) +
-					// "J" + (this.relayStatus?"01":"00")
-					// console.log(cmd)
-					// setTimeout(() => {
-					// 	wx.writeBLECharacteristicValue({
-					// 		deviceId: this.devices[0].deviceId,
-					// 		serviceId: this.primaryServiceUUID,
-					// 		characteristicId: this.writeUUID,
-					// 		value: this.MessageToArrayBuffer(cmd),
-					// 		success: (res) => {
-					// 			console.log("发送成功, 发送内容:" + cmd)
-					// 			wx.showToast({
-					// 				title: "发送成功",
-					// 				icon: "none"
-					// 			})
-					// 		},
-					// 		fail: () => {
-					// 			console.log("发送失败")
-					// 			wx.showToast({
-					// 				title: "发送失败",
-					// 				icon: "none"
-					// 			})
-					// 		}
-					// 	})
-					// }, 100)
 					console.log(this.volume)
 					console.log(this.relayStatus)
 					console.log(this.secAfter)
 					console.log(this.timeAfterInfo)
 					uni.navigateBack()
-				} else if (this.secAfter > 9999) {
+				} 
+				//如果时间间隔设置大于9999s则报错
+				else if (this.secAfter > 9999) {
 					this.secAfter = 9999
 					wx.showToast({
 						title: "间隔时间不得超过9999s!",

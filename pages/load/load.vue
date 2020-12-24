@@ -1,8 +1,10 @@
+<!-- 导入音乐页面 -->
 <template name="load">
 	<view>
 		<cu-custom bgColor="bg-gradual-red">
 			<block slot="content"><text class="text-bold">导入</text></block>
 		</cu-custom>
+		<!-- 顶部按钮组 -->
 		<view class="cu-bar bg-white shadow shadow-blur radius-bottom" :style="{position: 'fixed', left: 0, width: '100%', top:CustomBar + 'px', zIndex: 1000}">
 			<view class="action">
 				<button v-if="!isMultiSelect && musicInfo.length != 0" @click="MultiSelectStart" class="cu-btn round lines-black"><text>多选</text></button>
@@ -16,6 +18,7 @@
 				<button v-else class="cu-btn round lines-red" @click="deleteMusic"><text>删除</text></button>
 			</view>
 		</view>
+		<!-- 音乐列表 -->
 		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu-avatar shadow shadow-blur">
 				<view class="cu-item" :class="!isMultiSelect && index==curMusic?'bg-image-grey':''"v-for="(item, index) in musicInfo" :key="index" @click="MusicSelect" :id="index">
@@ -30,6 +33,7 @@
 				</view>
 			</view>
 		</view>
+		<!-- 音量调整滑块 -->
 		<view class="cu-modal bottom-modal" @tap="HideVolume" :class="isShowVolume?'show':''">
 			<view class="cu-dialog bg-white">
 				<view style="padding: 15rpx">
@@ -37,6 +41,7 @@
 				</view>
 			</view>
 		</view>
+		<!-- 底部按钮组 -->
 		<view class="bottomBox" style="height: 160rpx; bottom: 100rpx;">
 			<view class="flex justify-center align-center">
 				<view class="flex-sub flex justify-center padding align-center">
@@ -89,36 +94,44 @@
 			}
 		},
 		methods: {
+			// 改变音量
 			ChangeVolume(e) {
 				if (_self.innerAudioContext.volume != null) {
 					_self.innerAudioContext.volume = e.detail.value / 100
 				}
 			},
+			// 显示音量滑块
 			ShowVolume() {
 				_self.isShowVolume = true
 			},
+			// 隐藏音量滑块
 			HideVolume() {
 				_self.isShowVolume = false
 			},
+			// 进入多选页面
 			MultiSelectStart(){
 				_self.isMultiSelect = true
 			},
+			// 全选
 			SelectAll(){
 				_self.musicInfo.forEach((music, index) => {
 					music.isSelect = true
 				})
 				_self.isSelectedAll = true
 			},
+			// 全不选
 			SelectNothing(){
 				_self.musicInfo.forEach((music, index) => {
 					music.isSelect = false
 				})
 				_self.isSelectedAll = false
 			},
+			// 取消并退出全选页面
 			MultiSelectCancel(){
 				_self.isMultiSelect = false
 				_self.SelectNothing()
 			},
+			// 删除页面
 			deleteMusic(){
 				let index = 0
 				for(;;){
@@ -135,6 +148,7 @@
 					_self.isMultiSelect = false
 				}
 			},
+			// 点击音乐列表时选择音乐
 			MusicSelect(e){
 				if (_self.isMultiSelect){
 					_self.musicInfo[e.currentTarget.id].isSelect = !_self.musicInfo[e.currentTarget.id].isSelect
@@ -147,6 +161,7 @@
 					_self.clearRemain()	
 				}
 			},
+			// 上一首音乐
 			LastMusic(){
 				let musicCnt = _self.musicInfo.length
 				_self.curMusic--
@@ -160,6 +175,7 @@
 					_self.clearRemain()
 				}
 			},
+			// 下一首音乐
 			NextMusic() {
 				let musicCnt = _self.musicInfo.length
 				_self.curMusic++
@@ -173,6 +189,7 @@
 					_self.clearRemain()
 				}
 			},
+			// 改变播放模式
 			ChangePlayMode(){
 				_self.playModeIndex++
 				if (_self.playModeIndex >= 3){
@@ -198,31 +215,45 @@
 					})
 				}
 			},
+			// 播放和暂停
 			PlayPause(){
 				if (_self.musicInfo[_self.curMusic] != null)
 				{
+					//设置播放状态全局flag
 					_self.isPlaying = !_self.isPlaying
 					getApp().globalData.isPlaying = _self.isPlaying
 					if (_self.isPlaying) {
+						// 设置音乐文件地址
 						_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
+						// 打开自动播放
 						_self.innerAudioContext.autoplay = true
+						// 音乐文件可以播放回调函数
 						_self.innerAudioContext.onCanplay(() => {
 							_self.innerAudioContext.duration
+							// 设置延时以读取歌曲的时间长度
 							setTimeout(() => {
 								_self.musicInfo[_self.curMusic].duration = _self.innerAudioContext.duration
 								_self.culculateRemain()
 							}, 10)
 						})
+						// 播放音乐
 						_self.innerAudioContext.play()
+						// 音乐播放自然停止回调函数
 						_self.innerAudioContext.onEnded(() => {
+							// 清空剩余时间
 							_self.clearRemain()
+							// 如果是单曲模式
 							if (_self.playModeIndex == 0)
 							{
 								_self.isPlaying = false
 								getApp().globalData.isPlaying = false
-							} else if (_self.playModeIndex == 1) {
+							} 
+							// 如果是单曲循环模式
+							else if (_self.playModeIndex == 1) {
 								_self.innerAudioContext.play()
-							} else {
+							} 
+							// 如果是列表循环模式
+							else {
 								_self.curMusic++
 								if (_self.curMusic > _self.musicInfo.length) {
 									_self.curMusic = 0
@@ -232,6 +263,7 @@
 								
 							}
 						})
+						// 更新剩余播放时长
 						_self.innerAudioContext.onTimeUpdate(() => {
 							_self.culculateRemain()
 						})
@@ -245,6 +277,7 @@
 					})
 				}
 			},
+			// 计算歌曲的剩余播放时间
 			culculateRemain(){
 				_self.remain = parseInt(_self.innerAudioContext.duration - _self.innerAudioContext.currentTime)
 				_self.remainSec = _self.remain % 60
@@ -252,6 +285,7 @@
 				_self.remainHour = parseInt(_self.remain/3600)
 				_self.formatTime()
 			},
+			// 清除歌曲的剩余播放时间
 			clearRemain(){
 				_self.remain = 0
 				_self.remainSec = 0
@@ -259,6 +293,7 @@
 				_self.remainHour = 0
 				_self.formatTime()
 			},
+			// 格式化时间显示
 			formatTime() {
 				_self.remainString = ''
 				if (_self.remainHour < 10)
@@ -277,10 +312,13 @@
 				}
 				_self.remainString += _self.remainSec.toString()
 			},
+			// 导入微信聊天中的音乐文件
 			importMusic(){
 				wx.chooseMessageFile({
+					//最大选择的文件数量
 					count: 10,
 					type: 'file',
+					//文件格式筛选
 					extension: ['mp3', 'wma', 'flac', 'aac'],
 					success: (res) => {
 						res.tempFiles.forEach((file) => {

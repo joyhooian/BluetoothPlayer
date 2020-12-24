@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/plugin/animation",
     "pages/alarms/alarms",
     "pages/setting/setting",
     "pages/load/load",
@@ -11,7 +10,7 @@
   "subPackages": [],
   "window": {
     "navigationBarBackgroundColor": "#0081ff",
-    "navigationBarTitleText": "ColorUi for UniApp",
+    "navigationBarTitleText": "Bluetooth Player",
     "navigationStyle": "custom",
     "navigationBarTextStyle": "white"
   },
@@ -20,10 +19,7 @@
     "alarms": "/pages/alarms/alarms",
     "load": "/pages/load/load",
     "setting": "/pages/setting/setting",
-    "basics": "/pages/basics/home",
-    "components": "/pages/component/home",
-    "plugin": "/pages/plugin/home",
     "cu-custom": "/colorui/components/cu-custom"
   },
-  "sitemapLocation": "sitemap76.json"
+  "sitemapLocation": "sitemap38.json"
 }

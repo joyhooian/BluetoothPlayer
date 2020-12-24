@@ -162,88 +162,126 @@ Object.defineProperty(exports, "__esModule", { value: true });exports.default = 
 //
 //
 //
+//
+//
+//
+//
 var _default =
 {
   name: "setting",
   data: function data() {
     return {
-      devices: [],
-      primaryServiceUUID: '',
-      readUUID: '',
-      writeUUID: '',
+      devices: [], //设备列表
+      primaryServiceUUID: '', //主服务UUID
+      readUUID: '', //通知UUID
+      writeUUID: '', //写入UUID
       isSettingLight: false,
       isDownloading: false,
       isSelected: null,
-      fileList: [],
+      fileList: [], //文件列表
       lightMode: '',
-      valueListen: '',
+      valueListen: '', //监听的数据
       isMuted: false,
       isSingle: false,
       isAll: false };
 
   },
   methods: {
+    //灯模式返回
     LightBack: function LightBack() {
       this.isSettingLight = false;
     },
+    //下载文件
     DownLoadData: function DownLoadData() {var _this = this;
-      console.log("下载文件");
-      this.isDownloading = true;
-      wx.notifyBLECharacteristicValueChange({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.readUUID,
-        state: true,
-        success: function success(res) {
-          console.log("成功开启BLE Notify " + res.errMsg);
-          wx.onBLECharacteristicValueChange(function (res) {
-            _this.valueListen = _this.MessageToArrayBuffer(res.value);
-            console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.MessageToArrayBuffer(res.value));
-          });
-          setTimeout(function () {
-            wx.writeBLECharacteristicValue({
-              deviceId: _this.devices[0].deviceId,
-              serviceId: _this.primaryServiceUUID,
-              characteristicId: _this.writeUUID,
-              value: _this.MessageToArrayBuffer("AT+FILEREAD"),
-              success: function success(res) {
-                console.log("发送成功, 发送内容: AT+FILEREAD");
-              },
-              fail: function fail() {
-                console.log("发送失败");
-              } });
+      if (!this.isDownloading) {
+        this.isDownloading = true;
+        console.log("下载文件");
+        wx.notifyBLECharacteristicValueChange({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.readUUID,
+          state: true,
+          success: function success(res) {
+            wx.showToast({
+              title: "打开监听Notify成功",
+              icon: "none" });
 
-          }, 500);
-        },
-        fail: function fail(res) {
-          console.log("开启BLE Notify失败 " + res.errMsg);
-        } });
+          },
+          fail: function fail(res) {
+            wx.showToast({
+              title: "打开监听Nofity失败",
+              icon: 'none' });
 
-      setTimeout(function () {
-        if (_this.valueListen != '') {
-          _this.fileList = [];
-          var fileNum = parseInt(_this.valueListen.replace(/[^0-9]/ig, ""));
-          for (var cnt = 1; cnt <= fileNum; cnt++) {
-            _this.fileList.push(cnt);
+          } });
+
+        wx.onBLECharacteristicValueChange(function (res) {
+          wx.offBLEConnectionStateChange();
+          _this.valueListen = _this.ArrayBufferToMessage(res.value);
+          if (_this.valueListen.indexOf("AT+FILE") != -1) {
+            _this.fileList = [];
+            var fileNum = parseInt(_this.valueListen.replace(/[^0-9]/ig, ""));
+            for (var cnt = 1; cnt <= fileNum; cnt++) {
+              _this.fileList.push(cnt);
+            }
+            wx.showToast({
+              title: "成功读取" + fileNum + "个文件",
+              icon: "none" });
+
+          } else
+          {
+            wx.showToast({
+              title: "未读取到文件, 请重新读取",
+              icon: "none" });
+
           }
-          wx.showToast({
-            title: "成功读取" + fileNum + "个文件",
-            icon: "none" });
+          console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.valueListen);
+        });
+        setTimeout(function () {
+          //写特征值
+          wx.writeBLECharacteristicValue({
+            deviceId: _this.devices[0].deviceId,
+            serviceId: _this.primaryServiceUUID,
+            characteristicId: _this.writeUUID,
+            value: _this.MessageToArrayBuffer("AT+FILEREAD"),
+            success: function success(res) {
+              console.log("发送成功, 发送内容: AT+FILEREAD");
+              wx.showToast({
+                title: "发送成功",
+                icon: "none" });
 
-        }
-      }, 1000);
-      setTimeout(function () {
-        _this.isDownloading = false;
-      }, 1000);
+            },
+            fail: function fail() {
+              console.log("发送失败");
+              wx.showToast({
+                title: "发送失败",
+                icon: "none" });
+
+            } });
+
+        }, 100);
+        setTimeout(function () {
+          _this.isDownloading = false;
+          wx.notifyBLECharacteristicValueChange({
+            deviceId: _this.devices[0].deviceId,
+            serviceId: _this.primaryServiceUUID,
+            characteristicId: _this.readUUID,
+            state: false });
+
+          wx.offBLEConnectionStateChange();
+        }, 500);
+      }
     },
+    //打开灯模式二级菜单
     LightMode: function LightMode() {
       console.log("灯模式");
       this.isSettingLight = true;
     },
+    //选择灯模式
     SelectLight: function SelectLight(e) {
       this.lightMode = e.currentTarget.id;
       console.log(this.lightMode);
     },
+    //下发灯模式信息
     UploadLightMode: function UploadLightMode() {
       console.log("更新灯模式");
       var message = "AT+" + this.lightMode;
@@ -268,7 +306,9 @@ var _default =
         } });
 
     },
+    //静音或取消静音
     Mute: function Mute() {var _this2 = this;
+      //如果处于静音模式就取消静音, 下发取消静音指令
       if (this.isMuted) {
         this.isMuted = false;
         getApp().globalData.isMuted = this.isMuted;
@@ -294,7 +334,7 @@ var _default =
 
           } });
 
-      } else {
+      } else {//下发静音指令
         console.log("静音");
         var message = "AT+MUTEEN";
         wx.writeBLECharacteristicValue({
@@ -321,6 +361,7 @@ var _default =
 
       }
     },
+    //下发单曲指令
     Single: function Single() {var _this3 = this;
       console.log("单曲");
       var message = "AT+ONLY";
@@ -349,6 +390,7 @@ var _default =
         } });
 
     },
+    //下发循环指令
     All: function All() {var _this4 = this;
       console.log("循环");
       var message = "AT+ALL";
@@ -377,6 +419,7 @@ var _default =
         } });
 
     },
+    //下发删除指令
     Delete: function Delete() {
       console.log("删除");
       var message = "AT+DLE" + (this.isSelected + 1 < 10 ? '0' + (this.isSelected + 1) : this.isSelected + 1);
@@ -403,10 +446,12 @@ var _default =
       this.fileList.splice(this.isSelected, 1);
       this.isSelected = null;
     },
+    //选中文件单选框方法
     Select: function Select(e) {
       this.isSelected = parseInt(e.currentTarget.id);
       console.log("文件" + (this.isSelected + 1) + "被选中");
     },
+    //试听方法
     Play: function Play(e) {
       var playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2);
       var cmd = "AT+PLAY" + playIndex;
@@ -440,6 +485,7 @@ var _default =
     this.isMuted = getApp().globalData.isMuted;
     this.isSingle = getApp().globalData.isSingle;
     this.isAll = getApp().globalData.isAll;
+    //在页面创建时打开BLE Notify监听
     console.log(this);
   } };exports.default = _default;
 
@@ -474,7 +520,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ 47:
+/***/ 39:
 /*!*************************************************************************************************!*\
   !*** D:/Joyhoo/Documents/Projects/BluetoothPlayer/main.js?{"page":"pages%2Fsetting%2Fsetting"} ***!
   \*************************************************************************************************/
@@ -490,5 +536,5 @@ createPage(_setting.default);
 
 /***/ })
 
-},[[47,"common/runtime","common/vendor"]]]);
+},[[39,"common/runtime","common/vendor"]]]);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/setting/setting.js.map

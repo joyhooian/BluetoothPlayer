@@ -1,3 +1,4 @@
+<!-- 定时播放设置添加页面 -->
 <template>
 	<view>
 		<cu-custom bgColor="bg-gradual-red" isBack="true">
@@ -82,17 +83,22 @@
 			}
 		},
 		methods: {
+			//改变继电器开光状态
 			RelayChange(e) {
 				this.relayStatus = e.detail.value
 			},
+			//改变开始时间
 			ChangeStartTime(e) {
 				this.startTime = e.detail.value
+				// 如果开始时间晚于结束时间, 则自动改变结束时间等于开始时间
 				if (this.startTime > this.stopTime) {
 					this.stopTime = this.startTime
 				}
 			},
+			//改变结束时间
 			ChangeStopTime(e) {
 				this.stopTime = e.detail.value
+				//如果结束时间早于开始时间则弹窗提示
 				if (this.stopTime < this.startTime) {
 					this.stopTime = this.startTime
 					wx.showToast({
@@ -101,12 +107,15 @@
 					})
 				}
 			},
+			//选择星期
 			SelectWeekday(e) {
 				this.weekDays[e.currentTarget.id].selected = !this.weekDays[e.currentTarget.id].selected
 			},
+			//改变音量
 			changeVolume(e) {
 				this.volume = e.detail.value
 			},
+			//确认设置
 			upload() {
 				var tempWeekday = new Array()
 				this.weekDays.forEach((item) => {
@@ -114,6 +123,7 @@
 						tempWeekday.push(item.index)
 					}
 				})
+				//检查是否选择了重复星期
 				if (tempWeekday.length == 0) {
 					wx.showToast({
 						title: "未选择重复星期!",
@@ -239,6 +249,7 @@
 					}
 					getApp().globalData.alarmShow.isSetTime = true
 					getApp().globalData.alarmShow.isTimeAfter = false
+					// 返回上一层
 					uni.navigateBack({
 						
 					})

@@ -189,6 +189,11 @@ Object.defineProperty(exports, "__esModule", { value: true });exports.default = 
 //
 //
 //
+//
+//
+//
+//
+//
 
 var _self;var _default =
 {
@@ -223,36 +228,44 @@ var _self;var _default =
     } },
 
   methods: {
+    // 改变音量
     ChangeVolume: function ChangeVolume(e) {
       if (_self.innerAudioContext.volume != null) {
         _self.innerAudioContext.volume = e.detail.value / 100;
       }
     },
+    // 显示音量滑块
     ShowVolume: function ShowVolume() {
       _self.isShowVolume = true;
     },
+    // 隐藏音量滑块
     HideVolume: function HideVolume() {
       _self.isShowVolume = false;
     },
+    // 进入多选页面
     MultiSelectStart: function MultiSelectStart() {
       _self.isMultiSelect = true;
     },
+    // 全选
     SelectAll: function SelectAll() {
       _self.musicInfo.forEach(function (music, index) {
         music.isSelect = true;
       });
       _self.isSelectedAll = true;
     },
+    // 全不选
     SelectNothing: function SelectNothing() {
       _self.musicInfo.forEach(function (music, index) {
         music.isSelect = false;
       });
       _self.isSelectedAll = false;
     },
+    // 取消并退出全选页面
     MultiSelectCancel: function MultiSelectCancel() {
       _self.isMultiSelect = false;
       _self.SelectNothing();
     },
+    // 删除页面
     deleteMusic: function deleteMusic() {
       var index = 0;
       for (;;) {
@@ -269,6 +282,7 @@ var _self;var _default =
         _self.isMultiSelect = false;
       }
     },
+    // 点击音乐列表时选择音乐
     MusicSelect: function MusicSelect(e) {
       if (_self.isMultiSelect) {
         _self.musicInfo[e.currentTarget.id].isSelect = !_self.musicInfo[e.currentTarget.id].isSelect;
@@ -281,6 +295,7 @@ var _self;var _default =
         _self.clearRemain();
       }
     },
+    // 上一首音乐
     LastMusic: function LastMusic() {
       var musicCnt = _self.musicInfo.length;
       _self.curMusic--;
@@ -294,6 +309,7 @@ var _self;var _default =
         _self.clearRemain();
       }
     },
+    // 下一首音乐
     NextMusic: function NextMusic() {
       var musicCnt = _self.musicInfo.length;
       _self.curMusic++;
@@ -307,6 +323,7 @@ var _self;var _default =
         _self.clearRemain();
       }
     },
+    // 改变播放模式
     ChangePlayMode: function ChangePlayMode() {
       _self.playModeIndex++;
       if (_self.playModeIndex >= 3) {
@@ -332,40 +349,55 @@ var _self;var _default =
 
 
     },
+    // 播放和暂停
     PlayPause: function PlayPause() {
       if (_self.musicInfo[_self.curMusic] != null)
       {
+        //设置播放状态全局flag
         _self.isPlaying = !_self.isPlaying;
         getApp().globalData.isPlaying = _self.isPlaying;
         if (_self.isPlaying) {
+          // 设置音乐文件地址
           _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
+          // 打开自动播放
           _self.innerAudioContext.autoplay = true;
+          // 音乐文件可以播放回调函数
           _self.innerAudioContext.onCanplay(function () {
             _self.innerAudioContext.duration;
+            // 设置延时以读取歌曲的时间长度
             setTimeout(function () {
               _self.musicInfo[_self.curMusic].duration = _self.innerAudioContext.duration;
               _self.culculateRemain();
             }, 10);
           });
+          // 播放音乐
           _self.innerAudioContext.play();
+          // 音乐播放自然停止回调函数
           _self.innerAudioContext.onEnded(function () {
+            // 清空剩余时间
             _self.clearRemain();
+            // 如果是单曲模式
             if (_self.playModeIndex == 0)
             {
               _self.isPlaying = false;
               getApp().globalData.isPlaying = false;
-            } else if (_self.playModeIndex == 1) {
-              _self.innerAudioContext.play();
-            } else {
-              _self.curMusic++;
-              if (_self.curMusic > _self.musicInfo.length) {
-                _self.curMusic = 0;
-              }
-              _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
-              _self.innerAudioContext.play();
-
             }
+            // 如果是单曲循环模式
+            else if (_self.playModeIndex == 1) {
+                _self.innerAudioContext.play();
+              }
+              // 如果是列表循环模式
+              else {
+                  _self.curMusic++;
+                  if (_self.curMusic > _self.musicInfo.length) {
+                    _self.curMusic = 0;
+                  }
+                  _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
+                  _self.innerAudioContext.play();
+
+                }
           });
+          // 更新剩余播放时长
           _self.innerAudioContext.onTimeUpdate(function () {
             _self.culculateRemain();
           });
@@ -379,6 +411,7 @@ var _self;var _default =
 
       }
     },
+    // 计算歌曲的剩余播放时间
     culculateRemain: function culculateRemain() {
       _self.remain = parseInt(_self.innerAudioContext.duration - _self.innerAudioContext.currentTime);
       _self.remainSec = _self.remain % 60;
@@ -386,6 +419,7 @@ var _self;var _default =
       _self.remainHour = parseInt(_self.remain / 3600);
       _self.formatTime();
     },
+    // 清除歌曲的剩余播放时间
     clearRemain: function clearRemain() {
       _self.remain = 0;
       _self.remainSec = 0;
@@ -393,6 +427,7 @@ var _self;var _default =
       _self.remainHour = 0;
       _self.formatTime();
     },
+    // 格式化时间显示
     formatTime: function formatTime() {
       _self.remainString = '';
       if (_self.remainHour < 10)
@@ -411,10 +446,13 @@ var _self;var _default =
       }
       _self.remainString += _self.remainSec.toString();
     },
+    // 导入微信聊天中的音乐文件
     importMusic: function importMusic() {
       wx.chooseMessageFile({
+        //最大选择的文件数量
         count: 10,
         type: 'file',
+        //文件格式筛选
         extension: ['mp3', 'wma', 'flac', 'aac'],
         success: function success(res) {
           res.tempFiles.forEach(function (file) {
@@ -474,7 +512,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ 48:
+/***/ 40:
 /*!*******************************************************************************************!*\
   !*** D:/Joyhoo/Documents/Projects/BluetoothPlayer/main.js?{"page":"pages%2Fload%2Fload"} ***!
   \*******************************************************************************************/
@@ -490,5 +528,5 @@ createPage(_load.default);
 
 /***/ })
 
-},[[48,"common/runtime","common/vendor"]]]);
+},[[40,"common/runtime","common/vendor"]]]);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/load/load.js.map

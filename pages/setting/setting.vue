@@ -3,7 +3,9 @@
 		<cu-custom bgColor="bg-gradual-red">
 			<block slot="content">设置</block>
 		</cu-custom>
+		<!-- 上部操作栏 -->
 		<view class="cu-bar bg-white shadow shadow-blur radius-bottom" :style="{position: 'fixed', left: 0, width: '100%', top:CustomBar + 'px', zIndex: 1000}">
+			<!-- 左侧操作按钮 -->
 			<view class="action">
 				<button v-if="!isSettingLight" class="cu-btn round lines-red" @click="Delete"><text>删除</text></button>
 				<button v-else class="cu-btn round lines-black sm" @click="LightBack"><text class="text-sm">返回</text></button>
@@ -21,6 +23,7 @@
 				<button v-if="isSettingLight" @click="UploadLightMode" class="cu-btn round lines-black sm"><text class="text-sm">确定</text></button>
 			</view>
 		</view>
+		<!-- 文件列表 -->
 		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu margin-top sm-border">
 				<view class="cu-item" v-for="(file, index) in fileList" :key="index">
@@ -36,6 +39,7 @@
 				</view>
 			</view>
 		</view>
+		<!-- 底部操作按钮 -->
 		<view class="bottomBox">
 			<view class="flex justify-center">
 				<button class="cu-btn bg-red shadow-blur round lg" style="width: 240rpx;" @click="DownLoadData">
@@ -51,83 +55,117 @@
 		name: "setting",
 		data() {
 			return {
-				devices: [],
-				primaryServiceUUID: '',
-				readUUID: '',
-				writeUUID: '',
+				devices: [], //设备列表
+				primaryServiceUUID: '', //主服务UUID
+				readUUID: '', //通知UUID
+				writeUUID: '', //写入UUID
 				isSettingLight: false,
 				isDownloading: false,
 				isSelected: null,
-				fileList: [],
+				fileList: [], //文件列表
 				lightMode: '',
-				valueListen: '',
+				valueListen: '', //监听的数据
 				isMuted: false,
 				isSingle: false,
 				isAll: false
 			}
 		},
 		methods: {
+			//灯模式返回
 			LightBack() {
 				this.isSettingLight = false
 			},
+			//下载文件
 			DownLoadData() {
-				console.log("下载文件")
-				this.isDownloading  = true
-				wx.notifyBLECharacteristicValueChange({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.readUUID,
-					state: true,
-					success: (res) => {
-						console.log("成功开启BLE Notify " + res.errMsg)
-						wx.onBLECharacteristicValueChange((res) => {
-							this.valueListen = this.MessageToArrayBuffer(res.value)
-							console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + this.MessageToArrayBuffer(res.value))
-						})
-						setTimeout(() => {
-							wx.writeBLECharacteristicValue({
-								deviceId: this.devices[0].deviceId,
-								serviceId: this.primaryServiceUUID,
-								characteristicId: this.writeUUID,
-								value: this.MessageToArrayBuffer("AT+FILEREAD"),
-								success: (res) => {
-									console.log("发送成功, 发送内容: AT+FILEREAD")
-								},
-								fail: () => {
-									console.log("发送失败")
-								}
+				if(!this.isDownloading) {
+					this.isDownloading  = true
+					console.log("下载文件")
+					wx.notifyBLECharacteristicValueChange({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.readUUID,
+						state: true,
+						success: (res) => {
+							wx.showToast({
+								title: "打开监听Notify成功",
+								icon: "none"
 							})
-						}, 500)
-					},
-					fail: (res) => {
-						console.log("开启BLE Notify失败 " + res.errMsg)
-					}
-				})
-				setTimeout(() => {
-					if (this.valueListen != '') {
-						this.fileList = []
-						let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
-						for (let cnt = 1 ; cnt <= fileNum; cnt++) {
-							this.fileList.push(cnt)
+						},
+						fail: (res) => {
+							wx.showToast({
+								title: "打开监听Nofity失败",
+								icon: 'none'
+							})
 						}
-						wx.showToast({
-							title: "成功读取" + fileNum + "个文件",
-							icon: "none"
+					})	
+					wx.onBLECharacteristicValueChange((res) => {
+						wx.offBLEConnectionStateChange()
+						this.valueListen = this.ArrayBufferToMessage(res.value)
+						if (this.valueListen.indexOf("AT+FILE") != -1) {
+							this.fileList = []
+							let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
+							for (let cnt = 1 ; cnt <= fileNum; cnt++) {
+								this.fileList.push(cnt)
+							}
+							wx.showToast({
+								title: "成功读取" + fileNum + "个文件",
+								icon: "none"
+							})
+						}
+						else {
+							wx.showToast({
+								title: "未读取到文件, 请重新读取",
+								icon: "none"
+							})
+						}
+						console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + this.valueListen)
+					})
+					setTimeout(() => {
+						//写特征值
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: this.MessageToArrayBuffer("AT+FILEREAD"),
+							success: (res) => {
+								console.log("发送成功, 发送内容: AT+FILEREAD")
+								wx.showToast({
+									title: "发送成功",
+									icon: "none"
+								})
+							},
+							fail: () => {
+								console.log("发送失败")
+								wx.showToast({
+									title: "发送失败",
+									icon: "none"
+								})
+							}
 						})
-					}
-				}, 1000)
-				setTimeout(() => {
-					this.isDownloading = false
-				}, 1000)
+					}, 100)
+					setTimeout(() => {
+						this.isDownloading = false
+						wx.notifyBLECharacteristicValueChange({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.readUUID,
+							state: false
+						})
+						wx.offBLEConnectionStateChange()
+					}, 500)
+				}
 			},
+			//打开灯模式二级菜单
 			LightMode() {
 				console.log("灯模式")
 				this.isSettingLight = true
 			},
+			//选择灯模式
 			SelectLight(e) {
 				this.lightMode = e.currentTarget.id
 				console.log(this.lightMode)
 			},
+			//下发灯模式信息
 			UploadLightMode() {
 				console.log("更新灯模式")
 				var message = "AT+" + this.lightMode
@@ -152,7 +190,9 @@
 					}
 				})
 			},
+			//静音或取消静音
 			Mute() {
+				//如果处于静音模式就取消静音, 下发取消静音指令
 				if (this.isMuted){
 					this.isMuted = false
 					getApp().globalData.isMuted = this.isMuted
@@ -178,7 +218,7 @@
 							})
 						}
 					})
-				} else {
+				} else { //下发静音指令
 					console.log("静音")
 					var message = "AT+MUTEEN"
 					wx.writeBLECharacteristicValue({
@@ -205,6 +245,7 @@
 					})
 				}
 			},
+			//下发单曲指令
 			Single() {
 				console.log("单曲")
 				var message = "AT+ONLY"
@@ -233,6 +274,7 @@
 					}
 				})
 			},
+			//下发循环指令
 			All() {
 				console.log("循环")
 				var message = "AT+ALL"
@@ -261,6 +303,7 @@
 					}
 				})
 			},
+			//下发删除指令
 			Delete() {
 				console.log("删除")
 				var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
@@ -287,10 +330,12 @@
 				this.fileList.splice(this.isSelected, 1)
 				this.isSelected = null
 			},
+			//选中文件单选框方法
 			Select(e) {
 				this.isSelected = parseInt(e.currentTarget.id)
 				console.log("文件" + (this.isSelected + 1) + "被选中")
 			},
+			//试听方法
 			Play(e) {
 				let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
 				let cmd = "AT+PLAY" + playIndex
@@ -324,6 +369,7 @@
 			this.isMuted = getApp().globalData.isMuted
 			this.isSingle = getApp().globalData.isSingle
 			this.isAll = getApp().globalData.isAll
+			//在页面创建时打开BLE Notify监听
 			console.log(this)
 		}
 	}

@@ -26,9 +26,7 @@
 			}
 		},
 		onLaunch: function() {
-			Vue.prototype.dosomething = (e) => {
-				console.log(e)
-			}
+			// AT指令打包
 			Vue.prototype.MessageToArrayBuffer = (msg) => {
 				let message = msg
 				message += '\r\n'
@@ -39,6 +37,7 @@
 				let u8Array = new Uint8Array(arr)
 				return u8Array.buffer
 			}
+			// AT指令解析
 			Vue.prototype.ArrayBufferToMessage = (buffer) => {
 				let uint8 = new Uint8Array(buffer)
 				let stringArray = new Array(uint8.length)
