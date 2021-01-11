@@ -44,16 +44,22 @@
 			};
 		},
 		methods: {
-			//获取北京时间, 并截取小时分钟, 同时格式化
-			getTime() {
-				var time = new Date().toString().split(" ")[4].substr(0, 5).replace(":", "")
-				return time
-			},
-			//通过AT指令上传时间, 指令格式AT+TIMECRC12001201
+			//通过AT指令上传时间
 			uploadTime() {
-				var message = 'AT+TIMECRC' + _self.getTime()
-				var messageBuffer = this.MessageToArrayBuffer(message)
-				return messageBuffer
+				// var message = 'AT+TIMECRC' + _self.getTime()
+				// var messageBuffer = this.MessageToArrayBuffer(message)
+				// return messageBuffer
+				let numArr = new Array()
+				let hour = new Date().toString().split(" ")[4].substr(0, 2)
+				let min = new Date().toString().split(" ")[4].substr(3, 2)
+				numArr.push(0x7E)
+				numArr.push(0x04)
+				numArr.push(0x12)
+				numArr.push(Number(hour))
+				numArr.push(Number(min))
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				return u8Arr.buffer
 			},
 			autoLinkDevice() {
 				//查看蓝牙适配器状态
@@ -286,6 +292,19 @@
 			_self.writeUUID = getApp().globalData.writeUUID
 		},
 		mounted() {
+			var hour = new Date().toString().split(" ")[4].substr(0, 2)
+			var min = new Date().toString().split(" ")[4].substr(3, 2)
+			console.log(Number(hour))
+			console.log(Number(min))
+			let numArr = new Array()
+			numArr.push(0x7E)
+			numArr.push(0x04)
+			numArr.push(0x12)
+			numArr.push(Number(hour))
+			numArr.push(Number(min))
+			numArr.push(0xEF)
+			let u8Arr = new Uint8Array(numArr)
+			console.log(u8Arr)
 			//页面挂载后打开蓝牙适配器
 			wx.getBluetoothAdapterState({
 				success: (res) => {

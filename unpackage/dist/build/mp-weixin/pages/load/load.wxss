@@ -1,0 +1,1 @@
+.bottomBox{position:fixed;margin:auto;height:160rpx;bottom:100rpx;left:0;right:0}.floatBtn{position:fixed;margin:auto;bottom:240rpx;right:20rpx}

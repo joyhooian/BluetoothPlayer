@@ -1,5 +1,5 @@
 {
-    "name" : "BluetoothPlayer",
+    "name" : "锦亨源智能之家",
     "appid" : "__UNI__45FD051",
     "description" : "",
     "versionName" : "ColorUi for UniApp 2.1.4",
@@ -48,10 +48,12 @@
     /* 快应用特有相关 */
     "mp-weixin" : {
         /* 小程序特有相关 */
-        "appid" : "wx7da468b25218b89a",
+        "appid" : "wx0d322d6cc5550006",
         "setting" : {
             "urlCheck" : false,
-            "es6" : true
+            "es6" : true,
+            "postcss" : true,
+            "minified" : true
         }
     },
     "h5" : {

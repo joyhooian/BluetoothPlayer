@@ -137,19 +137,34 @@
 						//遍历每个生效的设置组
 						this.alarmsInfo.forEach((alarm, index) => {
 							if (alarm.isUsing) {
-								let cmdGroup = new Array
-								//指令分包发送
-								cmdGroup.push("AT+TMST" + ('0'+(index+1)).slice(-2) + "E1")
-								cmdGroup.push("AT+TMST" + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') + 'E1') 
-								cmdGroup.push("AT+TMSTV" + ('0'+alarm.volume).slice(-2) + 'E1')
-								cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus?'01':'00') + 'E1')
-								let weekdaysString = 'AT+TMSTW'
+								let numArr = new Array()
+								numArr.push(0x7E)
+								numArr.push(0x09 + alarm.weekdays.length)
+								numArr.push(0x13)
+								numArr.push(index + 1)
+								numArr.push(Number(alarm.startTime.substr(0, 2)))
+								numArr.push(Number(alarm.startTime.substr(3, 2)))
+								numArr.push(Number(alarm.stopTime.substr(0, 2)))
+								numArr.push(Number(alarm.stopTime.substr(3, 2)))
+								numArr.push(alarm.volume)
+								numArr.push(alarm.relayStatus?0x01:0x00)
 								alarm.weekdays.forEach((weekday)=>{
-									weekdaysString += (weekday+1)
+									numArr.push(weekday + 1)
 								})
-								weekdaysString += "E0"
-								cmdGroup.push(weekdaysString)
-								alarmsMessage.push(cmdGroup)
+								numArr.push(0xEF)
+								//指令分包发送
+								// cmdGroup.push("AT+TMST" + ('0'+(index+1)).slice(-2) + "E1")
+								// cmdGroup.push("AT+TMST" + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') + 'E1') 
+								// cmdGroup.push("AT+TMSTV" + ('0'+alarm.volume).slice(-2) + 'E1')
+								// cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus?'01':'00') + 'E1')
+								// let weekdaysString = 'AT+TMSTW'
+								// alarm.weekdays.forEach((weekday)=>{
+								// 	weekdaysString += (weekday+1)
+								// })
+								// weekdaysString += "E0"
+								// cmdGroup.push(weekdaysString)
+								let u8Arr = new Uint8Array(numArr)
+								alarmsMessage.push(u8Arr.buffer)
 							}
 						})
 						//如果没有时间设置组生效则提醒
@@ -163,118 +178,154 @@
 							console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
 							//遍历命令数组并间隔发送
 							alarmsMessage.forEach((msg, index) => {
-								msg.forEach((cmd, cmdNum) => {
-									// 每个命令包之间间隔50ms
-									setTimeout(() => {
-										wx.writeBLECharacteristicValue({
-											deviceId: this.devices[0].deviceId,
-											serviceId: this.primaryServiceUUID,
-											characteristicId: this.writeUUID,
-											value: this.MessageToArrayBuffer(cmd),
-											success: (res) => {
-												console.log("发送成功, 发送内容: " + cmd)
-												// 带上时间戳打印到控制台
-												let sec = new Date().getSeconds()
-												let ms = new Date().getMilliseconds()
-												console.log(sec + ":" + ms)
-											},
-											fail: (res) => {
-												console.log("发送失败")
-											}
-										})
-									}, 250*index + 50*cmdNum)
-								})
+								setTimeout(() => {
+									wx.writeBLECharacteristicValue({
+										deviceId: this.devices[0].deviceId,
+										serviceId: this.primaryServiceUUID,
+										characteristicId: this.writeUUID,
+										value: msg,
+										success: (res) => {
+											console.log("发送成功")
+											console.log(msg)
+										},
+										fail: (res) => {
+											console.log("发送失败")
+										}
+									})
+								}, 200 * index)
+								// msg.forEach((cmd, cmdNum) => {
+								// 	// 每个命令包之间间隔50ms
+								// 	setTimeout(() => {
+								// 		wx.writeBLECharacteristicValue({
+								// 			deviceId: this.devices[0].deviceId,
+								// 			serviceId: this.primaryServiceUUID,
+								// 			characteristicId: this.writeUUID,
+								// 			value: this.MessageToArrayBuffer(cmd),
+								// 			success: (res) => {
+								// 				console.log("发送成功, 发送内容: " + cmd)
+								// 				// 带上时间戳打印到控制台
+								// 				let sec = new Date().getSeconds()
+								// 				let ms = new Date().getMilliseconds()
+								// 				console.log(sec + ":" + ms)
+								// 			},
+								// 			fail: (res) => {
+								// 				console.log("发送失败")
+								// 			}
+								// 		})
+								// 	}, 250*index + 50*cmdNum)
+								// })
 							})
 							//最后发送时间设定结束指令
-							setTimeout(() => {
-								wx.writeBLECharacteristicValue({
-									deviceId: this.devices[0].deviceId,
-									serviceId: this.primaryServiceUUID,
-									characteristicId: this.writeUUID,
-									value: this.MessageToArrayBuffer("AT+TIMESETOVER"),
-									success: (res) => {
-										console.log("发送成功, 发送内容: AT+TIMESETOVER")
-										// 带上时间戳打印到控制台
-										let sec = new Date().getSeconds()
-										let ms = new Date().getMilliseconds()
-										console.log(sec + ":" + ms)
-									},
-									fail: (res) => {
-										console.log("发送失败 " + res.errMsg)
-									},
-									complete: () => {
-										this.uploadLoading = false
-									}
-								})
-							}, 250*(alarmsMessage.length))
+							// setTimeout(() => {
+							// 	wx.writeBLECharacteristicValue({
+							// 		deviceId: this.devices[0].deviceId,
+							// 		serviceId: this.primaryServiceUUID,
+							// 		characteristicId: this.writeUUID,
+							// 		value: this.MessageToArrayBuffer("AT+TIMESETOVER"),
+							// 		success: (res) => {
+							// 			console.log("发送成功, 发送内容: AT+TIMESETOVER")
+							// 			// 带上时间戳打印到控制台
+							// 			let sec = new Date().getSeconds()
+							// 			let ms = new Date().getMilliseconds()
+							// 			console.log(sec + ":" + ms)
+							// 		},
+							// 		fail: (res) => {
+							// 			console.log("发送失败 " + res.errMsg)
+							// 		},
+							// 		complete: () => {
+							// 			this.uploadLoading = false
+							// 		}
+							// 	})
+							// }, 250*(alarmsMessage.length))
 						} 
 					} 
 					//如果是时间间隔设定
 					else if (this.alarmShow.isTimeAfter) {
 						console.log("上传间隔时间")
-						let cmdGroup = new Array
+						let numArr = new Array()
 						// 时间间隔分包发送指令
-						cmdGroup.push("AT+TIMEJGT" + ("0000"+this.timeAfterInfo.secAfter).slice(-4))
-						cmdGroup.push("AT+TIMEJGV" + ("0"+this.timeAfterInfo.volume).slice(-2))
-						cmdGroup.push("AT+TIMEJGJ" + (this.timeAfterInfo.relayStatus?"01":"00"))
-						console.log(cmdGroup)
-						cmdGroup.forEach((cmd, cmdNum) => {
-							// 每个指令之间间隔50ms
-							setTimeout(() => {
-								wx.writeBLECharacteristicValue({
-									deviceId: this.devices[0].deviceId,
-									serviceId: this.primaryServiceUUID,
-									characteristicId: this.writeUUID,
-									value: this.MessageToArrayBuffer(cmd),
-									success: (res) => {
-										console.log("发送成功, 发送内容: " + cmd)
-										let sec = new Date().getSeconds()
-										let ms = new Date().getMilliseconds()
-										console.log(sec + ":" + ms)
-										wx.showToast({
-											title: "发送成功",
-											icon: "none"
-										})
-									},
-									fail: (res) => {
-										console.log("发送失败")
-										wx.showToast({
-											title: "发送失败",
-											icon: "none"
-										})
-									}
-								})
-							}, 50*cmdNum)
+						numArr.push(0x7E)
+						numArr.push(0x06)
+						numArr.push(0x18)
+						numArr.push((this.timeAfterInfo.secAfter & 0xFF00) >> 8)
+						numArr.push(this.timeAfterInfo.secAfter & 0x00FF)
+						numArr.push(this.timeAfterInfo.volume)
+						numArr.push(this.timeAfterInfo.relayStatus?0x01:0x00)
+						numArr.push(0xEF)
+						// cmdGroup.push("AT+TIMEJGT" + ("0000"+this.timeAfterInfo.secAfter).slice(-4))
+						// cmdGroup.push("AT+TIMEJGV" + ("0"+this.timeAfterInfo.volume).slice(-2))
+						// cmdGroup.push("AT+TIMEJGJ" + (this.timeAfterInfo.relayStatus?"01":"00"))
+						let u8Arr = new Uint8Array(numArr)
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: u8Arr.buffer,
+							success: (res) => {
+								console.log("发送成功")
+								console.log(u8Arr.buffer)
+							},
+							fail: (res) => {
+								console.log("发送失败")
+							}
 						})
+						// cmdGroup.forEach((cmd, cmdNum) => {
+						// 	// 每个指令之间间隔50ms
+						// 	setTimeout(() => {
+						// 		wx.writeBLECharacteristicValue({
+						// 			deviceId: this.devices[0].deviceId,
+						// 			serviceId: this.primaryServiceUUID,
+						// 			characteristicId: this.writeUUID,
+						// 			value: this.MessageToArrayBuffer(cmd),
+						// 			success: (res) => {
+						// 				console.log("发送成功, 发送内容: " + cmd)
+						// 				let sec = new Date().getSeconds()
+						// 				let ms = new Date().getMilliseconds()
+						// 				console.log(sec + ":" + ms)
+						// 				wx.showToast({
+						// 					title: "发送成功",
+						// 					icon: "none"
+						// 				})
+						// 			},
+						// 			fail: (res) => {
+						// 				console.log("发送失败")
+						// 				wx.showToast({
+						// 					title: "发送失败",
+						// 					icon: "none"
+						// 				})
+						// 			}
+						// 		})
+						// 	}, 50*cmdNum)
+						// })
 						//最后发送时间间隔设置完毕指令
-						setTimeout(() => {
-							wx.writeBLECharacteristicValue({
-								deviceId: this.devices[0].deviceId,
-								serviceId: this.primaryServiceUUID,
-								characteristicId: this.writeUUID,
-								value: this.MessageToArrayBuffer("AT+TIMEJGOVER"),
-								success: (res) => {
-									console.log("发送成功, 发送内容: AT+TIMEJGOVER")
-									let sec = new Date().getSeconds()
-									let ms = new Date().getMilliseconds()
-									console.log(sec + ":" + ms)
-									wx.showToast({
-										title: "发送成功",
-										icon: "none"
-									})
-								},
-								fail: () => {
-									console.log("发送失败")
-									wx.showToast({
-										title: "发送失败",
-										icon: "none"
-									})
-								},
-								complete: () => {
-									this.uploadLoading = false
-								}
-							})
-						}, 150)
+						// setTimeout(() => {
+						// 	wx.writeBLECharacteristicValue({
+						// 		deviceId: this.devices[0].deviceId,
+						// 		serviceId: this.primaryServiceUUID,
+						// 		characteristicId: this.writeUUID,
+						// 		value: this.MessageToArrayBuffer("AT+TIMEJGOVER"),
+						// 		success: (res) => {
+						// 			console.log("发送成功, 发送内容: AT+TIMEJGOVER")
+						// 			let sec = new Date().getSeconds()
+						// 			let ms = new Date().getMilliseconds()
+						// 			console.log(sec + ":" + ms)
+						// 			wx.showToast({
+						// 				title: "发送成功",
+						// 				icon: "none"
+						// 			})
+						// 		},
+						// 		fail: () => {
+						// 			console.log("发送失败")
+						// 			wx.showToast({
+						// 				title: "发送失败",
+						// 				icon: "none"
+						// 			})
+						// 		},
+						// 		complete: () => {
+						// 			this.uploadLoading = false
+						// 		}
+						// 	})
+						// }, 150)
 					}
 				}
 			},

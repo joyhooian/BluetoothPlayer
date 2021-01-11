@@ -541,19 +541,34 @@ var _self;var _default =
           //遍历每个生效的设置组
           this.alarmsInfo.forEach(function (alarm, index) {
             if (alarm.isUsing) {
-              var cmdGroup = new Array();
-              //指令分包发送
-              cmdGroup.push("AT+TMST" + ('0' + (index + 1)).slice(-2) + "E1");
-              cmdGroup.push("AT+TMST" + alarm.startTime.replace(':', '') + alarm.stopTime.replace(':', '') + 'E1');
-              cmdGroup.push("AT+TMSTV" + ('0' + alarm.volume).slice(-2) + 'E1');
-              cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus ? '01' : '00') + 'E1');
-              var weekdaysString = 'AT+TMSTW';
+              var numArr = new Array();
+              numArr.push(0x7E);
+              numArr.push(0x09 + alarm.weekdays.length);
+              numArr.push(0x13);
+              numArr.push(index + 1);
+              numArr.push(Number(alarm.startTime.substr(0, 2)));
+              numArr.push(Number(alarm.startTime.substr(3, 2)));
+              numArr.push(Number(alarm.stopTime.substr(0, 2)));
+              numArr.push(Number(alarm.stopTime.substr(3, 2)));
+              numArr.push(alarm.volume);
+              numArr.push(alarm.relayStatus ? 0x01 : 0x00);
               alarm.weekdays.forEach(function (weekday) {
-                weekdaysString += weekday + 1;
+                numArr.push(weekday + 1);
               });
-              weekdaysString += "E0";
-              cmdGroup.push(weekdaysString);
-              alarmsMessage.push(cmdGroup);
+              numArr.push(0xEF);
+              //指令分包发送
+              // cmdGroup.push("AT+TMST" + ('0'+(index+1)).slice(-2) + "E1")
+              // cmdGroup.push("AT+TMST" + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') + 'E1') 
+              // cmdGroup.push("AT+TMSTV" + ('0'+alarm.volume).slice(-2) + 'E1')
+              // cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus?'01':'00') + 'E1')
+              // let weekdaysString = 'AT+TMSTW'
+              // alarm.weekdays.forEach((weekday)=>{
+              // 	weekdaysString += (weekday+1)
+              // })
+              // weekdaysString += "E0"
+              // cmdGroup.push(weekdaysString)
+              var u8Arr = new Uint8Array(numArr);
+              alarmsMessage.push(u8Arr.buffer);
             }
           });
           //如果没有时间设置组生效则提醒
@@ -567,118 +582,154 @@ var _self;var _default =
             console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
             //遍历命令数组并间隔发送
             alarmsMessage.forEach(function (msg, index) {
-              msg.forEach(function (cmd, cmdNum) {
-                // 每个命令包之间间隔50ms
-                setTimeout(function () {
-                  wx.writeBLECharacteristicValue({
-                    deviceId: _this.devices[0].deviceId,
-                    serviceId: _this.primaryServiceUUID,
-                    characteristicId: _this.writeUUID,
-                    value: _this.MessageToArrayBuffer(cmd),
-                    success: function success(res) {
-                      console.log("发送成功, 发送内容: " + cmd);
-                      // 带上时间戳打印到控制台
-                      var sec = new Date().getSeconds();
-                      var ms = new Date().getMilliseconds();
-                      console.log(sec + ":" + ms);
-                    },
-                    fail: function fail(res) {
-                      console.log("发送失败");
-                    } });
-
-                }, 250 * index + 50 * cmdNum);
-              });
-            });
-            //最后发送时间设定结束指令
-            setTimeout(function () {
-              wx.writeBLECharacteristicValue({
-                deviceId: _this.devices[0].deviceId,
-                serviceId: _this.primaryServiceUUID,
-                characteristicId: _this.writeUUID,
-                value: _this.MessageToArrayBuffer("AT+TIMESETOVER"),
-                success: function success(res) {
-                  console.log("发送成功, 发送内容: AT+TIMESETOVER");
-                  // 带上时间戳打印到控制台
-                  var sec = new Date().getSeconds();
-                  var ms = new Date().getMilliseconds();
-                  console.log(sec + ":" + ms);
-                },
-                fail: function fail(res) {
-                  console.log("发送失败 " + res.errMsg);
-                },
-                complete: function complete() {
-                  _this.uploadLoading = false;
-                } });
-
-            }, 250 * alarmsMessage.length);
-          }
-        }
-        //如果是时间间隔设定
-        else if (this.alarmShow.isTimeAfter) {
-            console.log("上传间隔时间");
-            var cmdGroup = new Array();
-            // 时间间隔分包发送指令
-            cmdGroup.push("AT+TIMEJGT" + ("0000" + this.timeAfterInfo.secAfter).slice(-4));
-            cmdGroup.push("AT+TIMEJGV" + ("0" + this.timeAfterInfo.volume).slice(-2));
-            cmdGroup.push("AT+TIMEJGJ" + (this.timeAfterInfo.relayStatus ? "01" : "00"));
-            console.log(cmdGroup);
-            cmdGroup.forEach(function (cmd, cmdNum) {
-              // 每个指令之间间隔50ms
               setTimeout(function () {
                 wx.writeBLECharacteristicValue({
                   deviceId: _this.devices[0].deviceId,
                   serviceId: _this.primaryServiceUUID,
                   characteristicId: _this.writeUUID,
-                  value: _this.MessageToArrayBuffer(cmd),
+                  value: msg,
                   success: function success(res) {
-                    console.log("发送成功, 发送内容: " + cmd);
-                    var sec = new Date().getSeconds();
-                    var ms = new Date().getMilliseconds();
-                    console.log(sec + ":" + ms);
-                    wx.showToast({
-                      title: "发送成功",
-                      icon: "none" });
-
+                    console.log("发送成功");
+                    console.log(msg);
                   },
                   fail: function fail(res) {
                     console.log("发送失败");
-                    wx.showToast({
-                      title: "发送失败",
-                      icon: "none" });
-
                   } });
 
-              }, 50 * cmdNum);
+              }, 200 * index);
+              // msg.forEach((cmd, cmdNum) => {
+              // 	// 每个命令包之间间隔50ms
+              // 	setTimeout(() => {
+              // 		wx.writeBLECharacteristicValue({
+              // 			deviceId: this.devices[0].deviceId,
+              // 			serviceId: this.primaryServiceUUID,
+              // 			characteristicId: this.writeUUID,
+              // 			value: this.MessageToArrayBuffer(cmd),
+              // 			success: (res) => {
+              // 				console.log("发送成功, 发送内容: " + cmd)
+              // 				// 带上时间戳打印到控制台
+              // 				let sec = new Date().getSeconds()
+              // 				let ms = new Date().getMilliseconds()
+              // 				console.log(sec + ":" + ms)
+              // 			},
+              // 			fail: (res) => {
+              // 				console.log("发送失败")
+              // 			}
+              // 		})
+              // 	}, 250*index + 50*cmdNum)
+              // })
             });
+            //最后发送时间设定结束指令
+            // setTimeout(() => {
+            // 	wx.writeBLECharacteristicValue({
+            // 		deviceId: this.devices[0].deviceId,
+            // 		serviceId: this.primaryServiceUUID,
+            // 		characteristicId: this.writeUUID,
+            // 		value: this.MessageToArrayBuffer("AT+TIMESETOVER"),
+            // 		success: (res) => {
+            // 			console.log("发送成功, 发送内容: AT+TIMESETOVER")
+            // 			// 带上时间戳打印到控制台
+            // 			let sec = new Date().getSeconds()
+            // 			let ms = new Date().getMilliseconds()
+            // 			console.log(sec + ":" + ms)
+            // 		},
+            // 		fail: (res) => {
+            // 			console.log("发送失败 " + res.errMsg)
+            // 		},
+            // 		complete: () => {
+            // 			this.uploadLoading = false
+            // 		}
+            // 	})
+            // }, 250*(alarmsMessage.length))
+          }
+        }
+        //如果是时间间隔设定
+        else if (this.alarmShow.isTimeAfter) {
+            console.log("上传间隔时间");
+            var numArr = new Array();
+            // 时间间隔分包发送指令
+            numArr.push(0x7E);
+            numArr.push(0x06);
+            numArr.push(0x18);
+            numArr.push((this.timeAfterInfo.secAfter & 0xFF00) >> 8);
+            numArr.push(this.timeAfterInfo.secAfter & 0x00FF);
+            numArr.push(this.timeAfterInfo.volume);
+            numArr.push(this.timeAfterInfo.relayStatus ? 0x01 : 0x00);
+            numArr.push(0xEF);
+            // cmdGroup.push("AT+TIMEJGT" + ("0000"+this.timeAfterInfo.secAfter).slice(-4))
+            // cmdGroup.push("AT+TIMEJGV" + ("0"+this.timeAfterInfo.volume).slice(-2))
+            // cmdGroup.push("AT+TIMEJGJ" + (this.timeAfterInfo.relayStatus?"01":"00"))
+            var u8Arr = new Uint8Array(numArr);
+            wx.writeBLECharacteristicValue({
+              deviceId: this.devices[0].deviceId,
+              serviceId: this.primaryServiceUUID,
+              characteristicId: this.writeUUID,
+              value: u8Arr.buffer,
+              success: function success(res) {
+                console.log("发送成功");
+                console.log(u8Arr.buffer);
+              },
+              fail: function fail(res) {
+                console.log("发送失败");
+              } });
+
+            // cmdGroup.forEach((cmd, cmdNum) => {
+            // 	// 每个指令之间间隔50ms
+            // 	setTimeout(() => {
+            // 		wx.writeBLECharacteristicValue({
+            // 			deviceId: this.devices[0].deviceId,
+            // 			serviceId: this.primaryServiceUUID,
+            // 			characteristicId: this.writeUUID,
+            // 			value: this.MessageToArrayBuffer(cmd),
+            // 			success: (res) => {
+            // 				console.log("发送成功, 发送内容: " + cmd)
+            // 				let sec = new Date().getSeconds()
+            // 				let ms = new Date().getMilliseconds()
+            // 				console.log(sec + ":" + ms)
+            // 				wx.showToast({
+            // 					title: "发送成功",
+            // 					icon: "none"
+            // 				})
+            // 			},
+            // 			fail: (res) => {
+            // 				console.log("发送失败")
+            // 				wx.showToast({
+            // 					title: "发送失败",
+            // 					icon: "none"
+            // 				})
+            // 			}
+            // 		})
+            // 	}, 50*cmdNum)
+            // })
             //最后发送时间间隔设置完毕指令
-            setTimeout(function () {
-              wx.writeBLECharacteristicValue({
-                deviceId: _this.devices[0].deviceId,
-                serviceId: _this.primaryServiceUUID,
-                characteristicId: _this.writeUUID,
-                value: _this.MessageToArrayBuffer("AT+TIMEJGOVER"),
-                success: function success(res) {
-                  console.log("发送成功, 发送内容: AT+TIMEJGOVER");
-                  var sec = new Date().getSeconds();
-                  var ms = new Date().getMilliseconds();
-                  console.log(sec + ":" + ms);
-                  wx.showToast({
-                    title: "发送成功",
-                    icon: "none" });
-
-                },
-                fail: function fail() {
-                  console.log("发送失败");
-                  wx.showToast({
-                    title: "发送失败",
-                    icon: "none" });
-
-                },
-                complete: function complete() {
-                  _this.uploadLoading = false;
-                } });
-
-            }, 150);
+            // setTimeout(() => {
+            // 	wx.writeBLECharacteristicValue({
+            // 		deviceId: this.devices[0].deviceId,
+            // 		serviceId: this.primaryServiceUUID,
+            // 		characteristicId: this.writeUUID,
+            // 		value: this.MessageToArrayBuffer("AT+TIMEJGOVER"),
+            // 		success: (res) => {
+            // 			console.log("发送成功, 发送内容: AT+TIMEJGOVER")
+            // 			let sec = new Date().getSeconds()
+            // 			let ms = new Date().getMilliseconds()
+            // 			console.log(sec + ":" + ms)
+            // 			wx.showToast({
+            // 				title: "发送成功",
+            // 				icon: "none"
+            // 			})
+            // 		},
+            // 		fail: () => {
+            // 			console.log("发送失败")
+            // 			wx.showToast({
+            // 				title: "发送失败",
+            // 				icon: "none"
+            // 			})
+            // 		},
+            // 		complete: () => {
+            // 			this.uploadLoading = false
+            // 		}
+            // 	})
+            // }, 150)
           }
       }
     },
@@ -1399,6 +1450,7 @@ Object.defineProperty(exports, "__esModule", { value: true });exports.default = 
 //
 //
 //
+//
 var _default =
 {
   name: "setting",
@@ -1449,35 +1501,64 @@ var _default =
 
         wx.onBLECharacteristicValueChange(function (res) {
           wx.offBLEConnectionStateChange();
-          _this.valueListen = _this.ArrayBufferToMessage(res.value);
-          if (_this.valueListen.indexOf("AT+FILE") != -1) {
-            _this.fileList = [];
-            var fileNum = parseInt(_this.valueListen.replace(/[^0-9]/ig, ""));
-            for (var cnt = 1; cnt <= fileNum; cnt++) {
-              _this.fileList.push(cnt);
+          // this.valueListen = this.ArrayBufferToMessage(res.value)
+          var u8Arr = Uint8Array(res.value);
+          console.log(u8Arr);
+          var testArr = [0x7E, 0x04, 0x20];
+          for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+            for (var cnt2 = 0; cnt2 < 3; cnt2++) {
+              if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+                if (cnt2 == 2) {
+                  _this.fileList = [];
+                  var fileNum = u8Arr[cnt1 + cnt2 + 1] << 8 | u8Arr[cnt1 + cnt2 + 2];
+                  for (var cnt = 1; cnt <= fileNum; cnt++) {
+                    _this.fileList.push(cnt);
+                  }
+                  wx.showToast({
+                    title: "成功读取" + fileNum + "个文件",
+                    icon: "none" });
+
+                }
+              } else {
+                break;
+              }
             }
-            wx.showToast({
-              title: "成功读取" + fileNum + "个文件",
-              icon: "none" });
-
-          } else
-          {
-            wx.showToast({
-              title: "未读取到文件, 请重新读取",
-              icon: "none" });
-
           }
+          // if (this.valueListen.indexOf("AT+FILE") != -1) {
+          // 	this.fileList = []
+          // 	let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
+          // 	for (let cnt = 1 ; cnt <= fileNum; cnt++) {
+          // 		this.fileList.push(cnt)
+          // 	}
+          // 	wx.showToast({
+          // 		title: "成功读取" + fileNum + "个文件",
+          // 		icon: "none"
+          // 	})
+          // }
+          // else {
+          // 	wx.showToast({
+          // 		title: "未读取到文件, 请重新读取",
+          // 		icon: "none"
+          // 	})
+          // }
           console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.valueListen);
         });
         setTimeout(function () {
+          var numArr = new Array();
+          numArr.push(0x7E);
+          numArr.push(0x02);
+          numArr.push(0x19);
+          numArr.push(0xEF);
+          var u8Arr = new Uint8Array(numArr);
           //写特征值
           wx.writeBLECharacteristicValue({
             deviceId: _this.devices[0].deviceId,
             serviceId: _this.primaryServiceUUID,
             characteristicId: _this.writeUUID,
-            value: _this.MessageToArrayBuffer("AT+FILEREAD"),
+            value: u8Arr.buffer,
             success: function success(res) {
-              console.log("发送成功, 发送内容: AT+FILEREAD");
+              console.log("发送成功");
+              console.log(u8Arr.buffer);
               wx.showToast({
                 title: "发送成功",
                 icon: "none" });
@@ -1517,21 +1598,29 @@ var _default =
     //下发灯模式信息
     UploadLightMode: function UploadLightMode() {
       console.log("更新灯模式");
-      var message = "AT+" + this.lightMode;
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x03);
+      numArr.push(0x17);
+      numArr.push(Number(this.lightMode.substr(5, 1)));
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+" + this.lightMode
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "更新灯模式成功",
             icon: "none" });
 
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "更新灯模式失败",
             icon: "none" });
@@ -1546,21 +1635,29 @@ var _default =
         this.isMuted = false;
         getApp().globalData.isMuted = this.isMuted;
         console.log("取消静音");
-        var message = "AT+MUTEDIS";
+        // var message = "AT+MUTEDIS"
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x03);
+        numArr.push(0x15);
+        numArr.push(0x00);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
           characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(message),
+          value: u8Arr.buffer,
           success: function success(res) {
-            console.log("发送数据成功 " + res.errMsg);
+            console.log("发送数据成功");
+            console.log(u8Arr.buffer);
             wx.showToast({
               title: "取消静音成功",
               icon: "none" });
 
           },
           fail: function fail(res) {
-            console.log("发送数据失败 " + res.errMsg);
+            console.log("发送数据失败");
             wx.showToast({
               title: "取消静音失败",
               icon: "none" });
@@ -1569,14 +1666,22 @@ var _default =
 
       } else {//下发静音指令
         console.log("静音");
-        var message = "AT+MUTEEN";
+        var _numArr = new Array();
+        _numArr.push(0x7E);
+        _numArr.push(0x03);
+        _numArr.push(0x15);
+        _numArr.push(0x01);
+        _numArr.push(0xEF);
+        var _u8Arr = new Uint8Array(_numArr);
+        // var message = "AT+MUTEEN"
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
           characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(message),
+          value: _u8Arr.buffer,
           success: function success(res) {
-            console.log("发送数据成功 " + res.errMsg);
+            console.log("发送数据成功");
+            console.log(_u8Arr.buffer);
             wx.showToast({
               title: "静音成功",
               icon: "none" });
@@ -1585,7 +1690,7 @@ var _default =
             getApp().globalData.isMuted = _this2.isMuted;
           },
           fail: function fail(res) {
-            console.log("发送数据失败 " + res.errMsg);
+            console.log("发送数据失败");
             wx.showToast({
               title: "静音失败",
               icon: "none" });
@@ -1597,14 +1702,21 @@ var _default =
     //下发单曲指令
     Single: function Single() {var _this3 = this;
       console.log("单曲");
-      var message = "AT+ONLY";
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x17);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+ONLY"
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "设置单曲播放成功",
             icon: "none" });
@@ -1615,7 +1727,7 @@ var _default =
           getApp().globalData.isAll = _this3.isAll;
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "设置单曲播放失败",
             icon: "none" });
@@ -1626,14 +1738,21 @@ var _default =
     //下发循环指令
     All: function All() {var _this4 = this;
       console.log("循环");
-      var message = "AT+ALL";
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x16);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+ALL"
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "设置循环播放成功",
             icon: "none" });
@@ -1644,7 +1763,7 @@ var _default =
           getApp().globalData.isAll = _this4.isAll;
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "设置循坏播放失败",
             icon: "none" });
@@ -1655,12 +1774,19 @@ var _default =
     //下发删除指令
     Delete: function Delete() {
       console.log("删除");
-      var message = "AT+DLE" + (this.isSelected + 1 < 10 ? '0' + (this.isSelected + 1) : this.isSelected + 1);
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x03);
+      numArr.push(0x14);
+      numArr.push(this.isSelected + 1);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
           console.log("发送数据成功 " + res.errMsg);
           wx.showToast({
@@ -1686,24 +1812,63 @@ var _default =
     },
     //试听方法
     Play: function Play(e) {
-      var playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2);
-      var cmd = "AT+PLAY" + playIndex;
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x04);
+      numArr.push(0x41);
+      numArr.push((parseInt(e.currentTarget.id) + 1 & 0xFF00) >> 8);
+      numArr.push(parseInt(e.currentTarget.id) + 1 & 0x00FF);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
+      // let cmd = "AT+PLAY" + playIndex
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(cmd),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("成功发送试听命令" + res.errMsg);
+          console.log("成功发送试听命令");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "成功发送试听命令",
             icon: 'none' });
 
         },
         fail: function fail(res) {
-          console.log("发送试听命令失败" + res.errMsg);
+          console.log("发送试听命令失败");
           wx.showToast({
             title: "发送试听命令失败",
+            icon: 'none' });
+
+        } });
+
+    },
+    PlayWhenBoot: function PlayWhenBoot() {
+      console.log("上电播放");
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x18);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      wx.writeBLECharacteristicValue({
+        deviceId: this.devices[0].deviceId,
+        serviceId: this.primaryServiceUUID,
+        characteristicId: this.writeUUID,
+        value: u8Arr.buffer,
+        success: function success(res) {
+          console.log("上电播放发送成功");
+          console.log(u8Arr.buffer);
+          wx.showToast({
+            title: "上电播放发送成功",
+            icon: 'none' });
+
+        },
+        fail: function fail(res) {
+          console.log("上电播放发送失败");
+          wx.showToast({
+            title: "上电播放发送失败",
             icon: 'none' });
 
         } });

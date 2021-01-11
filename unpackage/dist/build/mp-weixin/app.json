@@ -1,0 +1,25 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/alarms/alarms",
+    "pages/setting/setting",
+    "pages/load/load",
+    "pages/alarms/set-time",
+    "pages/alarms/time-after"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarBackgroundColor": "#0081ff",
+    "navigationBarTitleText": "锦亨源智能之家",
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "white"
+  },
+  "usingComponents": {
+    "links": "/pages/links/links",
+    "alarms": "/pages/alarms/alarms",
+    "load": "/pages/load/load",
+    "setting": "/pages/setting/setting",
+    "cu-custom": "/colorui/components/cu-custom"
+  },
+  "sitemapLocation": "sitemap.json"
+}

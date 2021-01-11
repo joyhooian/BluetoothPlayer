@@ -166,6 +166,7 @@ Object.defineProperty(exports, "__esModule", { value: true });exports.default = 
 //
 //
 //
+//
 var _default =
 {
   name: "setting",
@@ -216,35 +217,64 @@ var _default =
 
         wx.onBLECharacteristicValueChange(function (res) {
           wx.offBLEConnectionStateChange();
-          _this.valueListen = _this.ArrayBufferToMessage(res.value);
-          if (_this.valueListen.indexOf("AT+FILE") != -1) {
-            _this.fileList = [];
-            var fileNum = parseInt(_this.valueListen.replace(/[^0-9]/ig, ""));
-            for (var cnt = 1; cnt <= fileNum; cnt++) {
-              _this.fileList.push(cnt);
+          // this.valueListen = this.ArrayBufferToMessage(res.value)
+          var u8Arr = Uint8Array(res.value);
+          console.log(u8Arr);
+          var testArr = [0x7E, 0x04, 0x20];
+          for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+            for (var cnt2 = 0; cnt2 < 3; cnt2++) {
+              if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+                if (cnt2 == 2) {
+                  _this.fileList = [];
+                  var fileNum = u8Arr[cnt1 + cnt2 + 1] << 8 | u8Arr[cnt1 + cnt2 + 2];
+                  for (var cnt = 1; cnt <= fileNum; cnt++) {
+                    _this.fileList.push(cnt);
+                  }
+                  wx.showToast({
+                    title: "成功读取" + fileNum + "个文件",
+                    icon: "none" });
+
+                }
+              } else {
+                break;
+              }
             }
-            wx.showToast({
-              title: "成功读取" + fileNum + "个文件",
-              icon: "none" });
-
-          } else
-          {
-            wx.showToast({
-              title: "未读取到文件, 请重新读取",
-              icon: "none" });
-
           }
+          // if (this.valueListen.indexOf("AT+FILE") != -1) {
+          // 	this.fileList = []
+          // 	let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
+          // 	for (let cnt = 1 ; cnt <= fileNum; cnt++) {
+          // 		this.fileList.push(cnt)
+          // 	}
+          // 	wx.showToast({
+          // 		title: "成功读取" + fileNum + "个文件",
+          // 		icon: "none"
+          // 	})
+          // }
+          // else {
+          // 	wx.showToast({
+          // 		title: "未读取到文件, 请重新读取",
+          // 		icon: "none"
+          // 	})
+          // }
           console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.valueListen);
         });
         setTimeout(function () {
+          var numArr = new Array();
+          numArr.push(0x7E);
+          numArr.push(0x02);
+          numArr.push(0x19);
+          numArr.push(0xEF);
+          var u8Arr = new Uint8Array(numArr);
           //写特征值
           wx.writeBLECharacteristicValue({
             deviceId: _this.devices[0].deviceId,
             serviceId: _this.primaryServiceUUID,
             characteristicId: _this.writeUUID,
-            value: _this.MessageToArrayBuffer("AT+FILEREAD"),
+            value: u8Arr.buffer,
             success: function success(res) {
-              console.log("发送成功, 发送内容: AT+FILEREAD");
+              console.log("发送成功");
+              console.log(u8Arr.buffer);
               wx.showToast({
                 title: "发送成功",
                 icon: "none" });
@@ -284,21 +314,29 @@ var _default =
     //下发灯模式信息
     UploadLightMode: function UploadLightMode() {
       console.log("更新灯模式");
-      var message = "AT+" + this.lightMode;
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x03);
+      numArr.push(0x17);
+      numArr.push(Number(this.lightMode.substr(5, 1)));
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+" + this.lightMode
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "更新灯模式成功",
             icon: "none" });
 
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "更新灯模式失败",
             icon: "none" });
@@ -313,21 +351,29 @@ var _default =
         this.isMuted = false;
         getApp().globalData.isMuted = this.isMuted;
         console.log("取消静音");
-        var message = "AT+MUTEDIS";
+        // var message = "AT+MUTEDIS"
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x03);
+        numArr.push(0x15);
+        numArr.push(0x00);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
           characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(message),
+          value: u8Arr.buffer,
           success: function success(res) {
-            console.log("发送数据成功 " + res.errMsg);
+            console.log("发送数据成功");
+            console.log(u8Arr.buffer);
             wx.showToast({
               title: "取消静音成功",
               icon: "none" });
 
           },
           fail: function fail(res) {
-            console.log("发送数据失败 " + res.errMsg);
+            console.log("发送数据失败");
             wx.showToast({
               title: "取消静音失败",
               icon: "none" });
@@ -336,14 +382,22 @@ var _default =
 
       } else {//下发静音指令
         console.log("静音");
-        var message = "AT+MUTEEN";
+        var _numArr = new Array();
+        _numArr.push(0x7E);
+        _numArr.push(0x03);
+        _numArr.push(0x15);
+        _numArr.push(0x01);
+        _numArr.push(0xEF);
+        var _u8Arr = new Uint8Array(_numArr);
+        // var message = "AT+MUTEEN"
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
           characteristicId: this.writeUUID,
-          value: this.MessageToArrayBuffer(message),
+          value: _u8Arr.buffer,
           success: function success(res) {
-            console.log("发送数据成功 " + res.errMsg);
+            console.log("发送数据成功");
+            console.log(_u8Arr.buffer);
             wx.showToast({
               title: "静音成功",
               icon: "none" });
@@ -352,7 +406,7 @@ var _default =
             getApp().globalData.isMuted = _this2.isMuted;
           },
           fail: function fail(res) {
-            console.log("发送数据失败 " + res.errMsg);
+            console.log("发送数据失败");
             wx.showToast({
               title: "静音失败",
               icon: "none" });
@@ -364,14 +418,21 @@ var _default =
     //下发单曲指令
     Single: function Single() {var _this3 = this;
       console.log("单曲");
-      var message = "AT+ONLY";
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x17);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+ONLY"
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "设置单曲播放成功",
             icon: "none" });
@@ -382,7 +443,7 @@ var _default =
           getApp().globalData.isAll = _this3.isAll;
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "设置单曲播放失败",
             icon: "none" });
@@ -393,14 +454,21 @@ var _default =
     //下发循环指令
     All: function All() {var _this4 = this;
       console.log("循环");
-      var message = "AT+ALL";
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x16);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+ALL"
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "设置循环播放成功",
             icon: "none" });
@@ -411,7 +479,7 @@ var _default =
           getApp().globalData.isAll = _this4.isAll;
         },
         fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
+          console.log("发送数据失败");
           wx.showToast({
             title: "设置循坏播放失败",
             icon: "none" });
@@ -422,12 +490,19 @@ var _default =
     //下发删除指令
     Delete: function Delete() {
       console.log("删除");
-      var message = "AT+DLE" + (this.isSelected + 1 < 10 ? '0' + (this.isSelected + 1) : this.isSelected + 1);
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x03);
+      numArr.push(0x14);
+      numArr.push(this.isSelected + 1);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(message),
+        value: u8Arr.buffer,
         success: function success(res) {
           console.log("发送数据成功 " + res.errMsg);
           wx.showToast({
@@ -453,24 +528,63 @@ var _default =
     },
     //试听方法
     Play: function Play(e) {
-      var playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2);
-      var cmd = "AT+PLAY" + playIndex;
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x04);
+      numArr.push(0x41);
+      numArr.push((parseInt(e.currentTarget.id) + 1 & 0xFF00) >> 8);
+      numArr.push(parseInt(e.currentTarget.id) + 1 & 0x00FF);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      // let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
+      // let cmd = "AT+PLAY" + playIndex
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
-        value: this.MessageToArrayBuffer(cmd),
+        value: u8Arr.buffer,
         success: function success(res) {
-          console.log("成功发送试听命令" + res.errMsg);
+          console.log("成功发送试听命令");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "成功发送试听命令",
             icon: 'none' });
 
         },
         fail: function fail(res) {
-          console.log("发送试听命令失败" + res.errMsg);
+          console.log("发送试听命令失败");
           wx.showToast({
             title: "发送试听命令失败",
+            icon: 'none' });
+
+        } });
+
+    },
+    PlayWhenBoot: function PlayWhenBoot() {
+      console.log("上电播放");
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x18);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      wx.writeBLECharacteristicValue({
+        deviceId: this.devices[0].deviceId,
+        serviceId: this.primaryServiceUUID,
+        characteristicId: this.writeUUID,
+        value: u8Arr.buffer,
+        success: function success(res) {
+          console.log("上电播放发送成功");
+          console.log(u8Arr.buffer);
+          wx.showToast({
+            title: "上电播放发送成功",
+            icon: 'none' });
+
+        },
+        fail: function fail(res) {
+          console.log("上电播放发送失败");
+          wx.showToast({
+            title: "上电播放发送失败",
             icon: 'none' });
 
         } });

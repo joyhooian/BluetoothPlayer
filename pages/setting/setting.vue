@@ -19,7 +19,8 @@
 				<button v-if="isSettingLight" id="MODE02" @click="SelectLight" :class="lightMode=='MODE02'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式二</text></button>
 				<button v-if="isSettingLight" id="MODE03" @click="SelectLight" :class="lightMode=='MODE03'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式三</text></button>
 				<button v-if="isSettingLight" id="MODE04" @click="SelectLight" :class="lightMode=='MODE04'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式四</text></button>
-				<button v-if="!isSettingLight" @click="LightMode" class="cu-btn round lines-black"><text>灯模式</text></button>
+				<button v-if="!isSettingLight" @click="PlayWhenBoot" class="cu-btn round lines-black margin-right-xs"><text class="text-xs">上电播放</text></button>
+				<button v-if="!isSettingLight" @click="LightMode" class="cu-btn round lines-black"><text>灯</text></button>
 				<button v-if="isSettingLight" @click="UploadLightMode" class="cu-btn round lines-black sm"><text class="text-sm">确定</text></button>
 			</view>
 		</view>
@@ -100,35 +101,64 @@
 					})	
 					wx.onBLECharacteristicValueChange((res) => {
 						wx.offBLEConnectionStateChange()
-						this.valueListen = this.ArrayBufferToMessage(res.value)
-						if (this.valueListen.indexOf("AT+FILE") != -1) {
-							this.fileList = []
-							let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
-							for (let cnt = 1 ; cnt <= fileNum; cnt++) {
-								this.fileList.push(cnt)
+						// this.valueListen = this.ArrayBufferToMessage(res.value)
+						let u8Arr = Uint8Array(res.value)
+						console.log(u8Arr)
+						let testArr = [0x7E, 0x04, 0x20]
+						for(let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+							for(let cnt2 = 0; cnt2 < 3; cnt2++) {
+								if(u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+									if(cnt2 == 2) {
+										this.fileList = []
+										let fileNum = (u8Arr[cnt1 + cnt2 + 1] << 8) | (u8Arr[cnt1 + cnt2 + 2])
+										for (let cnt = 1; cnt <= fileNum; cnt++) {
+											this.fileList.push(cnt)
+										}
+										wx.showToast({
+											title: "成功读取" + fileNum + "个文件",
+											icon: "none"
+										})
+									}
+								} else {
+									break;
+								}
 							}
-							wx.showToast({
-								title: "成功读取" + fileNum + "个文件",
-								icon: "none"
-							})
 						}
-						else {
-							wx.showToast({
-								title: "未读取到文件, 请重新读取",
-								icon: "none"
-							})
-						}
+						// if (this.valueListen.indexOf("AT+FILE") != -1) {
+						// 	this.fileList = []
+						// 	let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
+						// 	for (let cnt = 1 ; cnt <= fileNum; cnt++) {
+						// 		this.fileList.push(cnt)
+						// 	}
+						// 	wx.showToast({
+						// 		title: "成功读取" + fileNum + "个文件",
+						// 		icon: "none"
+						// 	})
+						// }
+						// else {
+						// 	wx.showToast({
+						// 		title: "未读取到文件, 请重新读取",
+						// 		icon: "none"
+						// 	})
+						// }
 						console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + this.valueListen)
 					})
 					setTimeout(() => {
+						let numArr = new Array()
+						numArr.push(0x7E)
+						numArr.push(0x02)
+						numArr.push(0x19)
+						numArr.push(0xEF)
+						let u8Arr = new Uint8Array(numArr)
 						//写特征值
 						wx.writeBLECharacteristicValue({
 							deviceId: this.devices[0].deviceId,
 							serviceId: this.primaryServiceUUID,
 							characteristicId: this.writeUUID,
-							value: this.MessageToArrayBuffer("AT+FILEREAD"),
+							value: u8Arr.buffer,
 							success: (res) => {
-								console.log("发送成功, 发送内容: AT+FILEREAD")
+								console.log("发送成功")
+								console.log(u8Arr.buffer)
 								wx.showToast({
 									title: "发送成功",
 									icon: "none"
@@ -168,21 +198,29 @@
 			//下发灯模式信息
 			UploadLightMode() {
 				console.log("更新灯模式")
-				var message = "AT+" + this.lightMode
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x03)
+				numArr.push(0x17)
+				numArr.push(Number(this.lightMode.substr(5, 1)))
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				// var message = "AT+" + this.lightMode
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(message),
+					value: u8Arr.buffer,
 					success: (res) => {
-						console.log("发送数据成功 " + res.errMsg)
+						console.log("发送数据成功")
+						console.log(u8Arr.buffer)
 						wx.showToast({
 							title: "更新灯模式成功",
 							icon: "none"
 						})
 					},
 					fail: (res) => {
-						console.log("发送数据失败 " + res.errMsg)
+						console.log("发送数据失败")
 						wx.showToast({
 							title: "更新灯模式失败",
 							icon: "none"
@@ -197,21 +235,29 @@
 					this.isMuted = false
 					getApp().globalData.isMuted = this.isMuted
 					console.log("取消静音")
-					var message = "AT+MUTEDIS"
+					// var message = "AT+MUTEDIS"
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x03)
+					numArr.push(0x15)
+					numArr.push(0x00)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
 					wx.writeBLECharacteristicValue({
 						deviceId: this.devices[0].deviceId,
 						serviceId: this.primaryServiceUUID,
 						characteristicId: this.writeUUID,
-						value: this.MessageToArrayBuffer(message),
+						value: u8Arr.buffer,
 						success: (res) => {
-							console.log("发送数据成功 " + res.errMsg)
+							console.log("发送数据成功")
+							console.log(u8Arr.buffer)
 							wx.showToast({
 								title: "取消静音成功",
 								icon: "none"
 							})
 						},
 						fail: (res) => {
-							console.log("发送数据失败 " + res.errMsg)
+							console.log("发送数据失败")
 							wx.showToast({
 								title: "取消静音失败",
 								icon: "none"
@@ -220,14 +266,22 @@
 					})
 				} else { //下发静音指令
 					console.log("静音")
-					var message = "AT+MUTEEN"
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x03)
+					numArr.push(0x15)
+					numArr.push(0x01)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					// var message = "AT+MUTEEN"
 					wx.writeBLECharacteristicValue({
 						deviceId: this.devices[0].deviceId,
 						serviceId: this.primaryServiceUUID,
 						characteristicId: this.writeUUID,
-						value: this.MessageToArrayBuffer(message),
+						value: u8Arr.buffer,
 						success: (res) => {
-							console.log("发送数据成功 " + res.errMsg)
+							console.log("发送数据成功")
+							console.log(u8Arr.buffer)
 							wx.showToast({
 								title: "静音成功",
 								icon: "none"
@@ -236,7 +290,7 @@
 							getApp().globalData.isMuted = this.isMuted
 						},
 						fail: (res) => {
-							console.log("发送数据失败 " + res.errMsg)
+							console.log("发送数据失败")
 							wx.showToast({
 								title: "静音失败",
 								icon: "none"
@@ -248,14 +302,21 @@
 			//下发单曲指令
 			Single() {
 				console.log("单曲")
-				var message = "AT+ONLY"
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x02)
+				numArr.push(0x17)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				// var message = "AT+ONLY"
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(message),
+					value: u8Arr.buffer,
 					success: (res) => {
-						console.log("发送数据成功 " + res.errMsg)
+						console.log("发送数据成功")
+						console.log(u8Arr.buffer)
 						wx.showToast({
 							title: "设置单曲播放成功",
 							icon: "none"
@@ -266,7 +327,7 @@
 						getApp().globalData.isAll = this.isAll
 					},
 					fail: (res) => {
-						console.log("发送数据失败 " + res.errMsg)
+						console.log("发送数据失败")
 						wx.showToast({
 							title: "设置单曲播放失败",
 							icon: "none"
@@ -277,14 +338,21 @@
 			//下发循环指令
 			All() {
 				console.log("循环")
-				var message = "AT+ALL"
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x02)
+				numArr.push(0x16)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				// var message = "AT+ALL"
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(message),
+					value: u8Arr.buffer,
 					success: (res) => {
-						console.log("发送数据成功 " + res.errMsg)
+						console.log("发送数据成功")
+						console.log(u8Arr.buffer)
 						wx.showToast({
 							title: "设置循环播放成功",
 							icon: "none"
@@ -295,7 +363,7 @@
 						getApp().globalData.isAll = this.isAll
 					},
 					fail: (res) => {
-						console.log("发送数据失败 " + res.errMsg)
+						console.log("发送数据失败")
 						wx.showToast({
 							title: "设置循坏播放失败",
 							icon: "none"
@@ -306,12 +374,19 @@
 			//下发删除指令
 			Delete() {
 				console.log("删除")
-				var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x03)
+				numArr.push(0x14)
+				numArr.push(this.isSelected + 1)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				// var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(message),
+					value: u8Arr.buffer,
 					success: (res) => {
 						console.log("发送数据成功 " + res.errMsg)
 						wx.showToast({
@@ -337,24 +412,63 @@
 			},
 			//试听方法
 			Play(e) {
-				let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
-				let cmd = "AT+PLAY" + playIndex
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x04)
+				numArr.push(0x41)
+				numArr.push(((parseInt(e.currentTarget.id) + 1) & 0xFF00) >> 8)
+				numArr.push((parseInt(e.currentTarget.id) + 1) & 0x00FF)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				// let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
+				// let cmd = "AT+PLAY" + playIndex
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
-					value: this.MessageToArrayBuffer(cmd),
+					value: u8Arr.buffer,
 					success: (res) => {
-						console.log("成功发送试听命令" + res.errMsg)
+						console.log("成功发送试听命令")
+						console.log(u8Arr.buffer)
 						wx.showToast({
 							title: "成功发送试听命令",
 							icon: 'none'
 						})
 					},
 					fail: (res) => {
-						console.log("发送试听命令失败" + res.errMsg)
+						console.log("发送试听命令失败")
 						wx.showToast({
 							title: "发送试听命令失败",
+							icon: 'none'
+						})
+					}
+				})
+			},
+			PlayWhenBoot() {
+				console.log("上电播放")
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x02)
+				numArr.push(0x18)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				wx.writeBLECharacteristicValue({
+					deviceId: this.devices[0].deviceId,
+					serviceId: this.primaryServiceUUID,
+					characteristicId: this.writeUUID,
+					value: u8Arr.buffer,
+					success: (res) => {
+						console.log("上电播放发送成功")
+						console.log(u8Arr.buffer)
+						wx.showToast({
+							title: "上电播放发送成功",
+							icon: 'none'
+						})
+					},
+					fail: (res) => {
+						console.log("上电播放发送失败")
+						wx.showToast({
+							title: "上电播放发送失败",
 							icon: 'none'
 						})
 					}
