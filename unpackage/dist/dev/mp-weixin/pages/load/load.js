@@ -200,6 +200,10 @@ var _self;var _default =
   name: "load",
   data: function data() {
     return {
+      devices: [], //设备列表
+      primaryServiceUUID: '', //主服务UUID
+      readUUID: '', //通知UUID
+      writeUUID: '', //写入UUID
       currentVolume: 100,
       isShowVolume: false,
       loading: true,
@@ -219,7 +223,8 @@ var _self;var _default =
       remainSec: 0,
       remainMin: 0,
       remainHour: 0,
-      remainString: '' };
+      remainString: '',
+      ready4Play: false };
 
   },
   computed: {
@@ -350,13 +355,91 @@ var _self;var _default =
 
     },
     // 播放和暂停
-    PlayPause: function PlayPause() {
+    PlayPause: function PlayPause() {var _this = this;
       if (_self.musicInfo[_self.curMusic] != null)
       {
         //设置播放状态全局flag
         _self.isPlaying = !_self.isPlaying;
         getApp().globalData.isPlaying = _self.isPlaying;
+        //播放行为
         if (_self.isPlaying) {
+          if (this.devices.length != 0) {
+            setTimeout(function () {
+              wx.offBLECharacteristicValueChange();
+              wx.notifyBLECharacteristicValueChange({
+                deviceId: _this.devices[0].deviceId,
+                serviceId: _this.primaryServiceUUID,
+                characteristicId: _this.readUUID,
+                state: false });
+
+            }, 2000);
+            wx.notifyBLECharacteristicValueChange({
+              deviceId: this.devices[0].deviceId,
+              serviceId: this.primaryServiceUUID,
+              characteristicId: this.readUUID,
+              state: true,
+              success: function success(res) {
+                wx.showToast({
+                  title: "打开监听Notify成功",
+                  icon: "none" });
+
+              },
+              fail: function fail(res) {
+                wx.showToast({
+                  title: "打开监听Nofity失败",
+                  icon: 'none' });
+
+              } });
+
+            wx.onBLECharacteristicValueChange(function (res) {
+              var u8Arr = new Uint8Array(res.value);
+              var testArr = [0x7E, 0x03, 0x62, 0x00, 0xEF];
+              console.log("收到监听数据");
+              console.log(u8Arr);
+              for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+                for (var cnt2 = 0; cnt2 < 5; cnt2++) {
+                  if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+                    if (cnt2 == 4) {
+                      _self.innerAudioContext.stop();
+                      _self.isPlaying = false;
+                      getApp().globalData.isPlaying = false;
+                      wx.setKeepScreenOn({
+                        keepScreenOn: false });
+
+                      _self.clearRemain();
+                      wx.showToast({
+                        title: "更换失败",
+                        icon: "none" });
+
+                    }
+                  } else {
+                    break;
+                  }
+                }
+              }
+            });
+            setTimeout(function () {
+              var numArr = new Array();
+              numArr.push(0x7E);
+              numArr.push(0x02);
+              numArr.push(0x33);
+              numArr.push(0xEF);
+              var u8Arr = new Uint8Array(numArr);
+              wx.writeBLECharacteristicValue({
+                deviceId: _this.devices[0].deviceId,
+                serviceId: _this.primaryServiceUUID,
+                characteristicId: _this.writeUUID,
+                value: u8Arr.buffer,
+                success: function success() {
+                  console.log("发送成功");
+                  console.log(u8Arr.buffer);
+                },
+                fail: function fail() {
+                  console.log("发送失败");
+                } });
+
+            }, 100);
+          }
           // 设置音乐文件地址
           _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
           // 打开自动播放
@@ -371,7 +454,12 @@ var _self;var _default =
             }, 10);
           });
           // 播放音乐
-          _self.innerAudioContext.play();
+          setTimeout(function () {
+            _self.innerAudioContext.play();
+            wx.setKeepScreenOn({
+              keepScreenOn: true });
+
+          }, 500);
           // 音乐播放自然停止回调函数
           _self.innerAudioContext.onEnded(function () {
             // 清空剩余时间
@@ -381,6 +469,30 @@ var _self;var _default =
             {
               _self.isPlaying = false;
               getApp().globalData.isPlaying = false;
+              wx.setKeepScreenOn({
+                keepScreenOn: false });
+
+              var numArr = new Array();
+              numArr.push(0x7E);
+              numArr.push(0x02);
+              numArr.push(0x34);
+              numArr.push(0xEF);
+              var u8Arr = new Uint8Array(numArr);
+              setTimeout(function () {
+                wx.writeBLECharacteristicValue({
+                  deviceId: _this.devices[0].deviceId,
+                  serviceId: _this.primaryServiceUUID,
+                  characteristicId: _this.writeUUID,
+                  value: u8Arr.buffer,
+                  success: function success() {
+                    console.log("发送成功");
+                    console.log(u8Arr.buffer);
+                  },
+                  fail: function fail() {
+                    console.log("发送失败");
+                  } });
+
+              }, 1000);
             }
             // 如果是单曲循环模式
             else if (_self.playModeIndex == 1) {
@@ -402,7 +514,27 @@ var _self;var _default =
             _self.culculateRemain();
           });
         } else {
-          _self.innerAudioContext.pause();
+          _self.clearRemain();
+          _self.innerAudioContext.stop();
+          var numArr = new Array();
+          numArr.push(0x7E);
+          numArr.push(0x02);
+          numArr.push(0x34);
+          numArr.push(0xEF);
+          var u8Arr = new Uint8Array(numArr);
+          wx.writeBLECharacteristicValue({
+            deviceId: this.devices[0].deviceId,
+            serviceId: this.primaryServiceUUID,
+            characteristicId: this.writeUUID,
+            value: u8Arr.buffer,
+            success: function success() {
+              console.log("发送成功");
+              console.log(u8Arr.buffer);
+            },
+            fail: function fail() {
+              console.log("发送失败");
+            } });
+
         }
       } else {
         wx.showToast({
@@ -468,6 +600,9 @@ var _self;var _default =
 
     } },
 
+  beforeCreate: function beforeCreate() {
+    console.log("进入播放页面");
+  },
   created: function created() {
     _self = this;
     _self.tempFile = getApp().globalData.tempFile;
@@ -475,10 +610,79 @@ var _self;var _default =
     _self.innerAudioContext = getApp().globalData.innerAudioContext;
     _self.curMusic = getApp().globalData.curMusic;
     _self.isPlaying = getApp().globalData.isPlaying;
+    this.devices = getApp().globalData.devices;
+    this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
+    this.readUUID = getApp().globalData.readUUID;
+    this.writeUUID = getApp().globalData.writeUUID;
   },
-  deactivated: function deactivated() {
-    console.log("here");
-    _self.innerAudioContext.stop();
+  mounted: function mounted() {var _this2 = this;
+    if (this.devices.length != 0) {
+      wx.notifyBLECharacteristicValueChange({
+        deviceId: this.devices[0].deviceId,
+        serviceId: this.primaryServiceUUID,
+        characteristicId: this.readUUID,
+        state: true,
+        success: function success(res) {
+          wx.showToast({
+            title: "打开监听Notify成功",
+            icon: "none" });
+
+        },
+        fail: function fail(res) {
+          wx.showToast({
+            title: "打开监听Nofity失败",
+            icon: 'none' });
+
+        } });
+
+      wx.onBLECharacteristicValueChange(function (res) {
+        wx.offBLECharacteristicValueChange();
+        var u8Arr = new Uint8Array(res.value);
+        console.log(u8Arr);
+        var testArr = [0x7E, 0x02, 0x33, 0xEF];
+        for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+          for (var cnt2 = 0; cnt2 < 4; cnt2++) {
+            if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+              if (cnt2 == 3) {
+                _this2.ready4Play = true;
+                wx.notifyBLECharacteristicValueChange({
+                  deviceId: _this2.devices[0].deviceId,
+                  serviceId: _this2.primaryServiceUUID,
+                  characteristicId: _this2.readUUID,
+                  state: false });
+
+              }
+            } else {
+              break;
+            }
+          }
+        }
+      });
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x32);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      setTimeout(function () {
+        wx.writeBLECharacteristicValue({
+          deviceId: _this2.devices[0].deviceId,
+          serviceId: _this2.primaryServiceUUID,
+          characteristicId: _this2.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("发送成功");
+            console.log(u8Arr.buffer);
+          },
+          fail: function fail() {
+            console.log("发送失败");
+            console.log(u8Arr.buffer);
+          } });
+
+      }, 100);
+    } else {
+      this.ready4Play = true;
+    }
   } };exports.default = _default;
 
 /***/ }),

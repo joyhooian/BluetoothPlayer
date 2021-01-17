@@ -48,12 +48,12 @@
 					<button class="cu-btn cuIcon lines-black round margin-right-sm shadow shadow-blur" @click="ChangePlayMode"><text class="text-black text-shadow" :class="playMode[playModeIndex]"></text></button>
 				</view>
 				<view class="flex-treble flex justify-center padding align-center">
-					<button class="cu-btn cuIcon lines-black round mid margin-left-sm shadow shadow-blur" :disabled="playDisabled" @click="LastMusic"><text class="cuIcon-backwardfill text-black text-shadow"></text></button>
-					<button class="cu-btn cuIcon lines-black round lg margin-left-sm margin-right-sm shadow" :disabled="playDisabled" @click="PlayPause"><text class="cuIcon-playfill text-red text-shadow lg" :class="isPlaying?'cuIcon-stop':'cuIcon-playfill'"></text></button>
-					<button class="cu-btn cuIcon lines-black round mid margin-right-sm shadow shadow-blur" :disabled="playDisabled" @click="NextMusic"><text class="cuIcon-play_forward_fill text-black text-shadow"></text></button>
+					<!-- <button class="cu-btn cuIcon lines-black round mid margin-left-sm shadow shadow-blur" :disabled="playDisabled" @click="LastMusic"><text class="cuIcon-backwardfill text-black text-shadow"></text></button> -->
+					<button class="cu-btn cuIcon lines-black round lg margin-left-sm margin-right-sm shadow" :disabled="playDisabled" @click="PlayPause"><text class="text-red text-shadow text-sm">{{isPlaying?"停止":"更换"}}</text></button>
+					<!-- <button class="cu-btn cuIcon lines-black round mid margin-right-sm shadow shadow-blur" :disabled="playDisabled" @click="NextMusic"><text class="cuIcon-play_forward_fill text-black text-shadow"></text></button> -->
 				</view>
 				<view class="flex-sub flex justify-center padding align-center">
-					<button class="cu-btn cuIcon lines-black round margin-left-sm shadow shadow-blur" :disabled="playDisabled" @click="ShowVolume"><text class="cuIcon-notification text-black text-shadow"></text></button>
+					<button class="cu-btn cuIcon lines-black round margin-left-sm shadow shadow-blur" :disabled="playDisabled&&ready4Play" @click="ShowVolume"><text class="cuIcon-notification text-black text-shadow"></text></button>
 				</view>
 			</view>
 		</view>
@@ -66,6 +66,10 @@
 		name: "load",
 		data() {
 			return {
+				devices: [], //设备列表
+				primaryServiceUUID: '', //主服务UUID
+				readUUID: '', //通知UUID
+				writeUUID: '', //写入UUID
 				currentVolume: 100,
 				isShowVolume: false,
 				loading: true,
@@ -85,7 +89,8 @@
 				remainSec:0,
 				remainMin:0,
 				remainHour:0,
-				remainString: ''
+				remainString: '',
+				ready4Play: false
 			}
 		},
 		computed: {
@@ -222,7 +227,85 @@
 					//设置播放状态全局flag
 					_self.isPlaying = !_self.isPlaying
 					getApp().globalData.isPlaying = _self.isPlaying
+					//播放行为
 					if (_self.isPlaying) {
+						if (this.devices.length != 0) {
+							setTimeout(() => {
+								wx.offBLECharacteristicValueChange()
+								wx.notifyBLECharacteristicValueChange({
+									deviceId: this.devices[0].deviceId,
+									serviceId: this.primaryServiceUUID,
+									characteristicId: this.readUUID,
+									state: false
+								})
+							}, 2000)
+							wx.notifyBLECharacteristicValueChange({
+								deviceId: this.devices[0].deviceId,
+								serviceId: this.primaryServiceUUID,
+								characteristicId: this.readUUID,
+								state: true,
+								success: (res) => {
+									wx.showToast({
+										title: "打开监听Notify成功",
+										icon: "none"
+									})
+								},
+								fail: (res) => {
+									wx.showToast({
+										title: "打开监听Nofity失败",
+										icon: 'none'
+									})
+								}
+							})
+							wx.onBLECharacteristicValueChange((res) => {
+								let u8Arr = new Uint8Array(res.value)
+								let testArr = [0x7E, 0x03, 0x62, 0x00, 0xEF]
+								console.log("收到监听数据")
+								console.log(u8Arr)
+								for (let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+									for (let cnt2 = 0; cnt2 < 5; cnt2++) {
+										if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+											if (cnt2 == 4) {
+												_self.innerAudioContext.stop()
+												_self.isPlaying = false
+												getApp().globalData.isPlaying = false
+												wx.setKeepScreenOn({
+													keepScreenOn: false
+												})
+												_self.clearRemain()
+												wx.showToast({
+													title: "更换失败",
+													icon: "none"
+												})
+											}
+										} else {
+											break;
+										}
+									}
+								}
+							})
+							setTimeout(() => {
+								let numArr = new Array()
+								numArr.push(0x7E)
+								numArr.push(0x02)
+								numArr.push(0x33)
+								numArr.push(0xEF)
+								let u8Arr = new Uint8Array(numArr)
+								wx.writeBLECharacteristicValue({
+									deviceId: this.devices[0].deviceId,
+									serviceId: this.primaryServiceUUID,
+									characteristicId: this.writeUUID,
+									value: u8Arr.buffer,
+									success: () => {
+										console.log("发送成功")
+										console.log(u8Arr.buffer)
+									},
+									fail: () => {
+										console.log("发送失败")
+									}
+								})
+							}, 100)
+						}
 						// 设置音乐文件地址
 						_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
 						// 打开自动播放
@@ -237,7 +320,12 @@
 							}, 10)
 						})
 						// 播放音乐
-						_self.innerAudioContext.play()
+						setTimeout(() => {
+							_self.innerAudioContext.play()
+							wx.setKeepScreenOn({
+								keepScreenOn: true
+							})
+						}, 500)
 						// 音乐播放自然停止回调函数
 						_self.innerAudioContext.onEnded(() => {
 							// 清空剩余时间
@@ -247,6 +335,30 @@
 							{
 								_self.isPlaying = false
 								getApp().globalData.isPlaying = false
+								wx.setKeepScreenOn({
+									keepScreenOn: false
+								})
+								let numArr = new Array()
+								numArr.push(0x7E)
+								numArr.push(0x02)
+								numArr.push(0x34)
+								numArr.push(0xEF)
+								let u8Arr = new Uint8Array(numArr)
+								setTimeout(() => {
+									wx.writeBLECharacteristicValue({
+										deviceId: this.devices[0].deviceId,
+										serviceId: this.primaryServiceUUID,
+										characteristicId: this.writeUUID,
+										value: u8Arr.buffer,
+										success: () => {
+											console.log("发送成功")
+											console.log(u8Arr.buffer)
+										},
+										fail: () => {
+											console.log("发送失败")
+										}
+									})
+								}, 1000)
 							} 
 							// 如果是单曲循环模式
 							else if (_self.playModeIndex == 1) {
@@ -268,7 +380,27 @@
 							_self.culculateRemain()
 						})
 					} else {
-						_self.innerAudioContext.pause()
+						_self.clearRemain()
+						_self.innerAudioContext.stop()
+						let numArr = new Array()
+						numArr.push(0x7E)
+						numArr.push(0x02)
+						numArr.push(0x34)
+						numArr.push(0xEF)
+						let u8Arr = new Uint8Array(numArr)
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: u8Arr.buffer,
+							success: () => {
+								console.log("发送成功")
+								console.log(u8Arr.buffer)
+							},
+							fail: () => {
+								console.log("发送失败")
+							}
+						})
 					}
 				} else {
 					wx.showToast({
@@ -334,6 +466,9 @@
 				})
 			}
 		},
+		beforeCreate() {
+			console.log("进入播放页面")
+		},
 		created() {
 			_self = this
 			_self.tempFile = getApp().globalData.tempFile
@@ -341,10 +476,79 @@
 			_self.innerAudioContext = getApp().globalData.innerAudioContext
 			_self.curMusic = getApp().globalData.curMusic
 			_self.isPlaying = getApp().globalData.isPlaying
+			this.devices = getApp().globalData.devices
+			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
+			this.readUUID = getApp().globalData.readUUID
+			this.writeUUID = getApp().globalData.writeUUID
 		},
-		deactivated() {
-			console.log("here")
-			_self.innerAudioContext.stop()
+		mounted() {
+			if (this.devices.length != 0) {
+				wx.notifyBLECharacteristicValueChange({
+					deviceId: this.devices[0].deviceId,
+					serviceId: this.primaryServiceUUID,
+					characteristicId: this.readUUID,
+					state: true,
+					success: (res) => {
+						wx.showToast({
+							title: "打开监听Notify成功",
+							icon: "none"
+						})
+					},
+					fail: (res) => {
+						wx.showToast({
+							title: "打开监听Nofity失败",
+							icon: 'none'
+						})
+					}
+				})
+				wx.onBLECharacteristicValueChange((res) => {
+					wx.offBLECharacteristicValueChange()
+					let u8Arr = new Uint8Array(res.value)
+					console.log(u8Arr)
+					let testArr = [0x7E, 0x02, 0x33, 0xEF]
+					for (let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+						for (let cnt2 = 0; cnt2 < 4; cnt2++) {
+							if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+								if (cnt2 == 3) {
+									this.ready4Play = true;
+									wx.notifyBLECharacteristicValueChange({
+										deviceId: this.devices[0].deviceId,
+										serviceId: this.primaryServiceUUID,
+										characteristicId: this.readUUID,
+										state: false
+									})
+								}
+							} else {
+								break;
+							}
+						}
+					}
+				})
+				let numArr = new Array()
+				numArr.push(0x7E)
+				numArr.push(0x02)
+				numArr.push(0x32)
+				numArr.push(0xEF)
+				let u8Arr = new Uint8Array(numArr)
+				setTimeout(() => {
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("发送成功")
+							console.log(u8Arr.buffer)
+						},
+						fail: () => {
+							console.log("发送失败")
+							console.log(u8Arr.buffer)
+						}
+					})
+				}, 100)
+			} else {
+				this.ready4Play = true
+			}
 		}
 	}
 </script>

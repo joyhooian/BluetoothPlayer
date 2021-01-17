@@ -78,7 +78,7 @@
 			},
 			//下载文件
 			DownLoadData() {
-				if(!this.isDownloading) {
+				if(!this.isDownloading && this.devices.length != 0) {
 					this.isDownloading  = true
 					console.log("下载文件")
 					wx.notifyBLECharacteristicValueChange({
@@ -100,9 +100,8 @@
 						}
 					})	
 					wx.onBLECharacteristicValueChange((res) => {
-						wx.offBLEConnectionStateChange()
-						// this.valueListen = this.ArrayBufferToMessage(res.value)
-						let u8Arr = Uint8Array(res.value)
+						wx.offBLECharacteristicValueChange()
+						let u8Arr = new Uint8Array(res.value)
 						console.log(u8Arr)
 						let testArr = [0x7E, 0x04, 0x20]
 						for(let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
@@ -124,23 +123,14 @@
 								}
 							}
 						}
-						// if (this.valueListen.indexOf("AT+FILE") != -1) {
-						// 	this.fileList = []
-						// 	let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
-						// 	for (let cnt = 1 ; cnt <= fileNum; cnt++) {
-						// 		this.fileList.push(cnt)
-						// 	}
-						// 	wx.showToast({
-						// 		title: "成功读取" + fileNum + "个文件",
-						// 		icon: "none"
-						// 	})
-						// }
-						// else {
-						// 	wx.showToast({
-						// 		title: "未读取到文件, 请重新读取",
-						// 		icon: "none"
-						// 	})
-						// }
+						setTimeout(() => {
+							if (this.fileList.length == 0) {
+								wx.showToast({
+									title: "读取失败, 请再试一次",
+									icon: "none"
+								})
+							}
+						}, 100)
 						console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + this.valueListen)
 					})
 					setTimeout(() => {
@@ -181,7 +171,7 @@
 							characteristicId: this.readUUID,
 							state: false
 						})
-						wx.offBLEConnectionStateChange()
+						wx.offBLECharacteristicValueChange()
 					}, 500)
 				}
 			},
@@ -205,7 +195,6 @@
 				numArr.push(Number(this.lightMode.substr(5, 1)))
 				numArr.push(0xEF)
 				let u8Arr = new Uint8Array(numArr)
-				// var message = "AT+" + this.lightMode
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
@@ -273,7 +262,6 @@
 					numArr.push(0x01)
 					numArr.push(0xEF)
 					let u8Arr = new Uint8Array(numArr)
-					// var message = "AT+MUTEEN"
 					wx.writeBLECharacteristicValue({
 						deviceId: this.devices[0].deviceId,
 						serviceId: this.primaryServiceUUID,
@@ -305,7 +293,7 @@
 				let numArr = new Array()
 				numArr.push(0x7E)
 				numArr.push(0x02)
-				numArr.push(0x17)
+				numArr.push(0x21)
 				numArr.push(0xEF)
 				let u8Arr = new Uint8Array(numArr)
 				// var message = "AT+ONLY"
@@ -381,14 +369,14 @@
 				numArr.push(this.isSelected + 1)
 				numArr.push(0xEF)
 				let u8Arr = new Uint8Array(numArr)
-				// var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
 					characteristicId: this.writeUUID,
 					value: u8Arr.buffer,
 					success: (res) => {
-						console.log("发送数据成功 " + res.errMsg)
+						console.log("发送数据成功")
+						console.log(u8Arr.buffer)
 						wx.showToast({
 							title: "删除文件成功",
 							icon: "none"
@@ -420,8 +408,6 @@
 				numArr.push((parseInt(e.currentTarget.id) + 1) & 0x00FF)
 				numArr.push(0xEF)
 				let u8Arr = new Uint8Array(numArr)
-				// let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
-				// let cmd = "AT+PLAY" + playIndex
 				wx.writeBLECharacteristicValue({
 					deviceId: this.devices[0].deviceId,
 					serviceId: this.primaryServiceUUID,
@@ -449,7 +435,7 @@
 				let numArr = new Array()
 				numArr.push(0x7E)
 				numArr.push(0x02)
-				numArr.push(0x18)
+				numArr.push(0x22)
 				numArr.push(0xEF)
 				let u8Arr = new Uint8Array(numArr)
 				wx.writeBLECharacteristicValue({
@@ -475,6 +461,9 @@
 				})
 			}
 		},
+		beforeCreate() {
+			console.log("进入设置页面")
+		},
 		created() {
 			this.devices = getApp().globalData.devices
 			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
@@ -484,7 +473,9 @@
 			this.isSingle = getApp().globalData.isSingle
 			this.isAll = getApp().globalData.isAll
 			//在页面创建时打开BLE Notify监听
-			console.log(this)
+		},
+		mounted() {
+			
 		}
 	}
 </script>

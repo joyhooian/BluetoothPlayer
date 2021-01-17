@@ -399,8 +399,10 @@ var _self;var _default =
       console.log(_self);
     } },
 
+  beforeCreate: function beforeCreate() {
+    console.log("进入连接页面");
+  },
   created: function created() {
-    console.log(this);
     _self = this;
     _self.devices = getApp().globalData.devices;
     _self.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
@@ -408,19 +410,6 @@ var _self;var _default =
     _self.writeUUID = getApp().globalData.writeUUID;
   },
   mounted: function mounted() {
-    var hour = new Date().toString().split(" ")[4].substr(0, 2);
-    var min = new Date().toString().split(" ")[4].substr(3, 2);
-    console.log(Number(hour));
-    console.log(Number(min));
-    var numArr = new Array();
-    numArr.push(0x7E);
-    numArr.push(0x04);
-    numArr.push(0x12);
-    numArr.push(Number(hour));
-    numArr.push(Number(min));
-    numArr.push(0xEF);
-    var u8Arr = new Uint8Array(numArr);
-    console.log(u8Arr);
     //页面挂载后打开蓝牙适配器
     wx.getBluetoothAdapterState({
       success: function success(res) {
@@ -454,9 +443,6 @@ var _self;var _default =
 
       } });
 
-  },
-  beforeCreate: function beforeCreate() {
-    console.log("进入连接页面");
   } };exports.default = _default;
 
 /***/ }),

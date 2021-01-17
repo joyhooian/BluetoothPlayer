@@ -283,8 +283,10 @@
 				console.log(_self)
 			}
 		},
+		beforeCreate() {
+			console.log("进入连接页面")
+		},
 		created() {
-			console.log(this)
 			_self = this
 			_self.devices = getApp().globalData.devices
 			_self.primaryServiceUUID = getApp().globalData.primaryServiceUUID
@@ -292,19 +294,6 @@
 			_self.writeUUID = getApp().globalData.writeUUID
 		},
 		mounted() {
-			var hour = new Date().toString().split(" ")[4].substr(0, 2)
-			var min = new Date().toString().split(" ")[4].substr(3, 2)
-			console.log(Number(hour))
-			console.log(Number(min))
-			let numArr = new Array()
-			numArr.push(0x7E)
-			numArr.push(0x04)
-			numArr.push(0x12)
-			numArr.push(Number(hour))
-			numArr.push(Number(min))
-			numArr.push(0xEF)
-			let u8Arr = new Uint8Array(numArr)
-			console.log(u8Arr)
 			//页面挂载后打开蓝牙适配器
 			wx.getBluetoothAdapterState({
 				success: (res) => {
@@ -338,9 +327,6 @@
 					})
 				}
 			})
-		},
-		beforeCreate() {
-			console.log("进入连接页面")
 		}
 	}
 </script>

@@ -492,14 +492,6 @@ var _self;var _default =
       uploadLoading: false,
       CustomBar: this.CustomBar,
       alarmsInfo: [],
-      //[{
-      //	isUsing: boolen,
-      //	relayStatus: boolen,
-      //	startTime: "12:00",
-      //	stopTime: "12:00",
-      //	volum: number,
-      //	weekdays: [0, 1, 2]
-      //}]
       alarmShow: {},
       timeAfterInfo: {},
       weekdaysString: [
@@ -556,17 +548,6 @@ var _self;var _default =
                 numArr.push(weekday + 1);
               });
               numArr.push(0xEF);
-              //指令分包发送
-              // cmdGroup.push("AT+TMST" + ('0'+(index+1)).slice(-2) + "E1")
-              // cmdGroup.push("AT+TMST" + alarm.startTime.replace(':','') + alarm.stopTime.replace(':','') + 'E1') 
-              // cmdGroup.push("AT+TMSTV" + ('0'+alarm.volume).slice(-2) + 'E1')
-              // cmdGroup.push("AT+TMSTJ" + (alarm.relayStatus?'01':'00') + 'E1')
-              // let weekdaysString = 'AT+TMSTW'
-              // alarm.weekdays.forEach((weekday)=>{
-              // 	weekdaysString += (weekday+1)
-              // })
-              // weekdaysString += "E0"
-              // cmdGroup.push(weekdaysString)
               var u8Arr = new Uint8Array(numArr);
               alarmsMessage.push(u8Arr.buffer);
             }
@@ -597,50 +578,7 @@ var _self;var _default =
                   } });
 
               }, 200 * index);
-              // msg.forEach((cmd, cmdNum) => {
-              // 	// 每个命令包之间间隔50ms
-              // 	setTimeout(() => {
-              // 		wx.writeBLECharacteristicValue({
-              // 			deviceId: this.devices[0].deviceId,
-              // 			serviceId: this.primaryServiceUUID,
-              // 			characteristicId: this.writeUUID,
-              // 			value: this.MessageToArrayBuffer(cmd),
-              // 			success: (res) => {
-              // 				console.log("发送成功, 发送内容: " + cmd)
-              // 				// 带上时间戳打印到控制台
-              // 				let sec = new Date().getSeconds()
-              // 				let ms = new Date().getMilliseconds()
-              // 				console.log(sec + ":" + ms)
-              // 			},
-              // 			fail: (res) => {
-              // 				console.log("发送失败")
-              // 			}
-              // 		})
-              // 	}, 250*index + 50*cmdNum)
-              // })
             });
-            //最后发送时间设定结束指令
-            // setTimeout(() => {
-            // 	wx.writeBLECharacteristicValue({
-            // 		deviceId: this.devices[0].deviceId,
-            // 		serviceId: this.primaryServiceUUID,
-            // 		characteristicId: this.writeUUID,
-            // 		value: this.MessageToArrayBuffer("AT+TIMESETOVER"),
-            // 		success: (res) => {
-            // 			console.log("发送成功, 发送内容: AT+TIMESETOVER")
-            // 			// 带上时间戳打印到控制台
-            // 			let sec = new Date().getSeconds()
-            // 			let ms = new Date().getMilliseconds()
-            // 			console.log(sec + ":" + ms)
-            // 		},
-            // 		fail: (res) => {
-            // 			console.log("发送失败 " + res.errMsg)
-            // 		},
-            // 		complete: () => {
-            // 			this.uploadLoading = false
-            // 		}
-            // 	})
-            // }, 250*(alarmsMessage.length))
           }
         }
         //如果是时间间隔设定
@@ -656,9 +594,6 @@ var _self;var _default =
             numArr.push(this.timeAfterInfo.volume);
             numArr.push(this.timeAfterInfo.relayStatus ? 0x01 : 0x00);
             numArr.push(0xEF);
-            // cmdGroup.push("AT+TIMEJGT" + ("0000"+this.timeAfterInfo.secAfter).slice(-4))
-            // cmdGroup.push("AT+TIMEJGV" + ("0"+this.timeAfterInfo.volume).slice(-2))
-            // cmdGroup.push("AT+TIMEJGJ" + (this.timeAfterInfo.relayStatus?"01":"00"))
             var u8Arr = new Uint8Array(numArr);
             wx.writeBLECharacteristicValue({
               deviceId: this.devices[0].deviceId,
@@ -673,63 +608,6 @@ var _self;var _default =
                 console.log("发送失败");
               } });
 
-            // cmdGroup.forEach((cmd, cmdNum) => {
-            // 	// 每个指令之间间隔50ms
-            // 	setTimeout(() => {
-            // 		wx.writeBLECharacteristicValue({
-            // 			deviceId: this.devices[0].deviceId,
-            // 			serviceId: this.primaryServiceUUID,
-            // 			characteristicId: this.writeUUID,
-            // 			value: this.MessageToArrayBuffer(cmd),
-            // 			success: (res) => {
-            // 				console.log("发送成功, 发送内容: " + cmd)
-            // 				let sec = new Date().getSeconds()
-            // 				let ms = new Date().getMilliseconds()
-            // 				console.log(sec + ":" + ms)
-            // 				wx.showToast({
-            // 					title: "发送成功",
-            // 					icon: "none"
-            // 				})
-            // 			},
-            // 			fail: (res) => {
-            // 				console.log("发送失败")
-            // 				wx.showToast({
-            // 					title: "发送失败",
-            // 					icon: "none"
-            // 				})
-            // 			}
-            // 		})
-            // 	}, 50*cmdNum)
-            // })
-            //最后发送时间间隔设置完毕指令
-            // setTimeout(() => {
-            // 	wx.writeBLECharacteristicValue({
-            // 		deviceId: this.devices[0].deviceId,
-            // 		serviceId: this.primaryServiceUUID,
-            // 		characteristicId: this.writeUUID,
-            // 		value: this.MessageToArrayBuffer("AT+TIMEJGOVER"),
-            // 		success: (res) => {
-            // 			console.log("发送成功, 发送内容: AT+TIMEJGOVER")
-            // 			let sec = new Date().getSeconds()
-            // 			let ms = new Date().getMilliseconds()
-            // 			console.log(sec + ":" + ms)
-            // 			wx.showToast({
-            // 				title: "发送成功",
-            // 				icon: "none"
-            // 			})
-            // 		},
-            // 		fail: () => {
-            // 			console.log("发送失败")
-            // 			wx.showToast({
-            // 				title: "发送失败",
-            // 				icon: "none"
-            // 			})
-            // 		},
-            // 		complete: () => {
-            // 			this.uploadLoading = false
-            // 		}
-            // 	})
-            // }, 150)
           }
       }
     },
@@ -742,6 +620,9 @@ var _self;var _default =
 
     } },
 
+  beforeCreate: function beforeCreate() {
+    console.log("进入定时页面");
+  },
   created: function created() {
     _self = this;
     _self.alarmsInfo = getApp().globalData.alarmsInfo;
@@ -751,7 +632,9 @@ var _self;var _default =
     _self.writeUUID = getApp().globalData.writeUUID;
     _self.alarmShow = getApp().globalData.alarmShow;
     _self.timeAfterInfo = getApp().globalData.timeAfterInfo;
-    console.log(_self);
+  },
+  mounted: function mounted() {
+
   } };exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
@@ -979,6 +862,10 @@ var _self;var _default =
   name: "load",
   data: function data() {
     return {
+      devices: [], //设备列表
+      primaryServiceUUID: '', //主服务UUID
+      readUUID: '', //通知UUID
+      writeUUID: '', //写入UUID
       currentVolume: 100,
       isShowVolume: false,
       loading: true,
@@ -998,7 +885,8 @@ var _self;var _default =
       remainSec: 0,
       remainMin: 0,
       remainHour: 0,
-      remainString: '' };
+      remainString: '',
+      ready4Play: false };
 
   },
   computed: {
@@ -1129,13 +1017,91 @@ var _self;var _default =
 
     },
     // 播放和暂停
-    PlayPause: function PlayPause() {
+    PlayPause: function PlayPause() {var _this = this;
       if (_self.musicInfo[_self.curMusic] != null)
       {
         //设置播放状态全局flag
         _self.isPlaying = !_self.isPlaying;
         getApp().globalData.isPlaying = _self.isPlaying;
+        //播放行为
         if (_self.isPlaying) {
+          if (this.devices.length != 0) {
+            setTimeout(function () {
+              wx.offBLECharacteristicValueChange();
+              wx.notifyBLECharacteristicValueChange({
+                deviceId: _this.devices[0].deviceId,
+                serviceId: _this.primaryServiceUUID,
+                characteristicId: _this.readUUID,
+                state: false });
+
+            }, 2000);
+            wx.notifyBLECharacteristicValueChange({
+              deviceId: this.devices[0].deviceId,
+              serviceId: this.primaryServiceUUID,
+              characteristicId: this.readUUID,
+              state: true,
+              success: function success(res) {
+                wx.showToast({
+                  title: "打开监听Notify成功",
+                  icon: "none" });
+
+              },
+              fail: function fail(res) {
+                wx.showToast({
+                  title: "打开监听Nofity失败",
+                  icon: 'none' });
+
+              } });
+
+            wx.onBLECharacteristicValueChange(function (res) {
+              var u8Arr = new Uint8Array(res.value);
+              var testArr = [0x7E, 0x03, 0x62, 0x00, 0xEF];
+              console.log("收到监听数据");
+              console.log(u8Arr);
+              for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+                for (var cnt2 = 0; cnt2 < 5; cnt2++) {
+                  if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+                    if (cnt2 == 4) {
+                      _self.innerAudioContext.stop();
+                      _self.isPlaying = false;
+                      getApp().globalData.isPlaying = false;
+                      wx.setKeepScreenOn({
+                        keepScreenOn: false });
+
+                      _self.clearRemain();
+                      wx.showToast({
+                        title: "更换失败",
+                        icon: "none" });
+
+                    }
+                  } else {
+                    break;
+                  }
+                }
+              }
+            });
+            setTimeout(function () {
+              var numArr = new Array();
+              numArr.push(0x7E);
+              numArr.push(0x02);
+              numArr.push(0x33);
+              numArr.push(0xEF);
+              var u8Arr = new Uint8Array(numArr);
+              wx.writeBLECharacteristicValue({
+                deviceId: _this.devices[0].deviceId,
+                serviceId: _this.primaryServiceUUID,
+                characteristicId: _this.writeUUID,
+                value: u8Arr.buffer,
+                success: function success() {
+                  console.log("发送成功");
+                  console.log(u8Arr.buffer);
+                },
+                fail: function fail() {
+                  console.log("发送失败");
+                } });
+
+            }, 100);
+          }
           // 设置音乐文件地址
           _self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path;
           // 打开自动播放
@@ -1150,7 +1116,12 @@ var _self;var _default =
             }, 10);
           });
           // 播放音乐
-          _self.innerAudioContext.play();
+          setTimeout(function () {
+            _self.innerAudioContext.play();
+            wx.setKeepScreenOn({
+              keepScreenOn: true });
+
+          }, 500);
           // 音乐播放自然停止回调函数
           _self.innerAudioContext.onEnded(function () {
             // 清空剩余时间
@@ -1160,6 +1131,30 @@ var _self;var _default =
             {
               _self.isPlaying = false;
               getApp().globalData.isPlaying = false;
+              wx.setKeepScreenOn({
+                keepScreenOn: false });
+
+              var numArr = new Array();
+              numArr.push(0x7E);
+              numArr.push(0x02);
+              numArr.push(0x34);
+              numArr.push(0xEF);
+              var u8Arr = new Uint8Array(numArr);
+              setTimeout(function () {
+                wx.writeBLECharacteristicValue({
+                  deviceId: _this.devices[0].deviceId,
+                  serviceId: _this.primaryServiceUUID,
+                  characteristicId: _this.writeUUID,
+                  value: u8Arr.buffer,
+                  success: function success() {
+                    console.log("发送成功");
+                    console.log(u8Arr.buffer);
+                  },
+                  fail: function fail() {
+                    console.log("发送失败");
+                  } });
+
+              }, 1000);
             }
             // 如果是单曲循环模式
             else if (_self.playModeIndex == 1) {
@@ -1181,7 +1176,27 @@ var _self;var _default =
             _self.culculateRemain();
           });
         } else {
-          _self.innerAudioContext.pause();
+          _self.clearRemain();
+          _self.innerAudioContext.stop();
+          var numArr = new Array();
+          numArr.push(0x7E);
+          numArr.push(0x02);
+          numArr.push(0x34);
+          numArr.push(0xEF);
+          var u8Arr = new Uint8Array(numArr);
+          wx.writeBLECharacteristicValue({
+            deviceId: this.devices[0].deviceId,
+            serviceId: this.primaryServiceUUID,
+            characteristicId: this.writeUUID,
+            value: u8Arr.buffer,
+            success: function success() {
+              console.log("发送成功");
+              console.log(u8Arr.buffer);
+            },
+            fail: function fail() {
+              console.log("发送失败");
+            } });
+
         }
       } else {
         wx.showToast({
@@ -1247,6 +1262,9 @@ var _self;var _default =
 
     } },
 
+  beforeCreate: function beforeCreate() {
+    console.log("进入播放页面");
+  },
   created: function created() {
     _self = this;
     _self.tempFile = getApp().globalData.tempFile;
@@ -1254,10 +1272,79 @@ var _self;var _default =
     _self.innerAudioContext = getApp().globalData.innerAudioContext;
     _self.curMusic = getApp().globalData.curMusic;
     _self.isPlaying = getApp().globalData.isPlaying;
+    this.devices = getApp().globalData.devices;
+    this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
+    this.readUUID = getApp().globalData.readUUID;
+    this.writeUUID = getApp().globalData.writeUUID;
   },
-  deactivated: function deactivated() {
-    console.log("here");
-    _self.innerAudioContext.stop();
+  mounted: function mounted() {var _this2 = this;
+    if (this.devices.length != 0) {
+      wx.notifyBLECharacteristicValueChange({
+        deviceId: this.devices[0].deviceId,
+        serviceId: this.primaryServiceUUID,
+        characteristicId: this.readUUID,
+        state: true,
+        success: function success(res) {
+          wx.showToast({
+            title: "打开监听Notify成功",
+            icon: "none" });
+
+        },
+        fail: function fail(res) {
+          wx.showToast({
+            title: "打开监听Nofity失败",
+            icon: 'none' });
+
+        } });
+
+      wx.onBLECharacteristicValueChange(function (res) {
+        wx.offBLECharacteristicValueChange();
+        var u8Arr = new Uint8Array(res.value);
+        console.log(u8Arr);
+        var testArr = [0x7E, 0x02, 0x33, 0xEF];
+        for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+          for (var cnt2 = 0; cnt2 < 4; cnt2++) {
+            if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+              if (cnt2 == 3) {
+                _this2.ready4Play = true;
+                wx.notifyBLECharacteristicValueChange({
+                  deviceId: _this2.devices[0].deviceId,
+                  serviceId: _this2.primaryServiceUUID,
+                  characteristicId: _this2.readUUID,
+                  state: false });
+
+              }
+            } else {
+              break;
+            }
+          }
+        }
+      });
+      var numArr = new Array();
+      numArr.push(0x7E);
+      numArr.push(0x02);
+      numArr.push(0x32);
+      numArr.push(0xEF);
+      var u8Arr = new Uint8Array(numArr);
+      setTimeout(function () {
+        wx.writeBLECharacteristicValue({
+          deviceId: _this2.devices[0].deviceId,
+          serviceId: _this2.primaryServiceUUID,
+          characteristicId: _this2.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("发送成功");
+            console.log(u8Arr.buffer);
+          },
+          fail: function fail() {
+            console.log("发送失败");
+            console.log(u8Arr.buffer);
+          } });
+
+      }, 100);
+    } else {
+      this.ready4Play = true;
+    }
   } };exports.default = _default;
 
 /***/ }),
@@ -1478,7 +1565,7 @@ var _default =
     },
     //下载文件
     DownLoadData: function DownLoadData() {var _this = this;
-      if (!this.isDownloading) {
+      if (!this.isDownloading && this.devices.length != 0) {
         this.isDownloading = true;
         console.log("下载文件");
         wx.notifyBLECharacteristicValueChange({
@@ -1500,9 +1587,8 @@ var _default =
           } });
 
         wx.onBLECharacteristicValueChange(function (res) {
-          wx.offBLEConnectionStateChange();
-          // this.valueListen = this.ArrayBufferToMessage(res.value)
-          var u8Arr = Uint8Array(res.value);
+          wx.offBLECharacteristicValueChange();
+          var u8Arr = new Uint8Array(res.value);
           console.log(u8Arr);
           var testArr = [0x7E, 0x04, 0x20];
           for (var cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
@@ -1524,23 +1610,14 @@ var _default =
               }
             }
           }
-          // if (this.valueListen.indexOf("AT+FILE") != -1) {
-          // 	this.fileList = []
-          // 	let fileNum = parseInt(this.valueListen.replace(/[^0-9]/ig,""))
-          // 	for (let cnt = 1 ; cnt <= fileNum; cnt++) {
-          // 		this.fileList.push(cnt)
-          // 	}
-          // 	wx.showToast({
-          // 		title: "成功读取" + fileNum + "个文件",
-          // 		icon: "none"
-          // 	})
-          // }
-          // else {
-          // 	wx.showToast({
-          // 		title: "未读取到文件, 请重新读取",
-          // 		icon: "none"
-          // 	})
-          // }
+          setTimeout(function () {
+            if (_this.fileList.length == 0) {
+              wx.showToast({
+                title: "读取失败, 请再试一次",
+                icon: "none" });
+
+            }
+          }, 100);
           console.log('特征值 ' + res.characteristicId + '已更新, ' + '现在是' + _this.valueListen);
         });
         setTimeout(function () {
@@ -1581,7 +1658,7 @@ var _default =
             characteristicId: _this.readUUID,
             state: false });
 
-          wx.offBLEConnectionStateChange();
+          wx.offBLECharacteristicValueChange();
         }, 500);
       }
     },
@@ -1605,7 +1682,6 @@ var _default =
       numArr.push(Number(this.lightMode.substr(5, 1)));
       numArr.push(0xEF);
       var u8Arr = new Uint8Array(numArr);
-      // var message = "AT+" + this.lightMode
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
@@ -1673,7 +1749,6 @@ var _default =
         _numArr.push(0x01);
         _numArr.push(0xEF);
         var _u8Arr = new Uint8Array(_numArr);
-        // var message = "AT+MUTEEN"
         wx.writeBLECharacteristicValue({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
@@ -1705,7 +1780,7 @@ var _default =
       var numArr = new Array();
       numArr.push(0x7E);
       numArr.push(0x02);
-      numArr.push(0x17);
+      numArr.push(0x21);
       numArr.push(0xEF);
       var u8Arr = new Uint8Array(numArr);
       // var message = "AT+ONLY"
@@ -1781,14 +1856,14 @@ var _default =
       numArr.push(this.isSelected + 1);
       numArr.push(0xEF);
       var u8Arr = new Uint8Array(numArr);
-      // var message = "AT+DLE" + ((this.isSelected+1)<10?'0'+(this.isSelected+1):(this.isSelected+1))
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
         characteristicId: this.writeUUID,
         value: u8Arr.buffer,
         success: function success(res) {
-          console.log("发送数据成功 " + res.errMsg);
+          console.log("发送数据成功");
+          console.log(u8Arr.buffer);
           wx.showToast({
             title: "删除文件成功",
             icon: "none" });
@@ -1820,8 +1895,6 @@ var _default =
       numArr.push(parseInt(e.currentTarget.id) + 1 & 0x00FF);
       numArr.push(0xEF);
       var u8Arr = new Uint8Array(numArr);
-      // let playIndex = ('0' + (parseInt(e.currentTarget.id) + 1)).slice(-2)
-      // let cmd = "AT+PLAY" + playIndex
       wx.writeBLECharacteristicValue({
         deviceId: this.devices[0].deviceId,
         serviceId: this.primaryServiceUUID,
@@ -1849,7 +1922,7 @@ var _default =
       var numArr = new Array();
       numArr.push(0x7E);
       numArr.push(0x02);
-      numArr.push(0x18);
+      numArr.push(0x22);
       numArr.push(0xEF);
       var u8Arr = new Uint8Array(numArr);
       wx.writeBLECharacteristicValue({
@@ -1875,6 +1948,9 @@ var _default =
 
     } },
 
+  beforeCreate: function beforeCreate() {
+    console.log("进入设置页面");
+  },
   created: function created() {
     this.devices = getApp().globalData.devices;
     this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
@@ -1884,7 +1960,9 @@ var _default =
     this.isSingle = getApp().globalData.isSingle;
     this.isAll = getApp().globalData.isAll;
     //在页面创建时打开BLE Notify监听
-    console.log(this);
+  },
+  mounted: function mounted() {
+
   } };exports.default = _default;
 
 /***/ }),
