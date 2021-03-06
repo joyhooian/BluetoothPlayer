@@ -168,9 +168,11 @@ var _self;var _default =
       var numArr = new Array();
       var hour = new Date().toString().split(" ")[4].substr(0, 2);
       var min = new Date().toString().split(" ")[4].substr(3, 2);
+      var weekday = new Date().getDay();
       numArr.push(0x7E);
       numArr.push(0x04);
       numArr.push(0x12);
+      numArr.push(Number(weekday));
       numArr.push(Number(hour));
       numArr.push(Number(min));
       numArr.push(0xEF);

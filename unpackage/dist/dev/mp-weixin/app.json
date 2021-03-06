@@ -14,12 +14,14 @@
     "navigationStyle": "custom",
     "navigationBarTextStyle": "white"
   },
+  "uniStatistics": {
+    "enable": false
+  },
   "usingComponents": {
     "links": "/pages/links/links",
     "alarms": "/pages/alarms/alarms",
     "load": "/pages/load/load",
     "setting": "/pages/setting/setting",
     "cu-custom": "/colorui/components/cu-custom"
-  },
-  "sitemapLocation": "sitemap91.json"
+  }
 }

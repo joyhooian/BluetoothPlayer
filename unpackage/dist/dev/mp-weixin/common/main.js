@@ -124,12 +124,17 @@ var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 2));function _i
     isMuted: false,
     isSingle: false,
     isAll: false,
+    isPlayWhenBoot: false,
+    isTimingCancel: false,
     alarmShow: {
       isSetTime: false,
       isTimeAfter: false } },
 
 
   onLaunch: function onLaunch() {
+    wx.setKeepScreenOn({
+      keepScreenOn: true });
+
     // AT指令打包
     _vue.default.prototype.MessageToArrayBuffer = function (msg) {
       var message = msg;
@@ -559,6 +564,7 @@ var _self;var _default =
               title: "请启用要设置的任务!",
               icon: "none" });
 
+            this.uploadLoading = false;
           } else if (this.primaryServiceUUID != '' && this.writeUUID != '') {
             console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID);
             //遍历命令数组并间隔发送
@@ -579,6 +585,32 @@ var _self;var _default =
 
               }, 200 * index);
             });
+            setTimeout(function () {
+              var u8Arr = new Uint8Array([0x7E, 0x02, 0x55, 0xEF]);
+              wx.writeBLECharacteristicValue({
+                deviceId: _this.devices[0].deviceId,
+                serviceId: _this.primaryServiceUUID,
+                characteristicId: _this.writeUUID,
+                value: u8Arr.buffer,
+                success: function success(res) {
+                  console.log("发送成功");
+                  console.log(u8Arr.buffer);
+                },
+                fail: function fail(res) {
+                  console.log('发送失败');
+                },
+                complete: function complete() {
+                  _this.uploadLoading = false;
+                } });
+
+            }, 200 * alarmsMessage.length);
+          } else {
+            console.log(alarmsMessage);
+            wx.showToast({
+              title: '请连接设备！',
+              icon: 'none' });
+
+            this.uploadLoading = false;
           }
         }
         //如果是时间间隔设定
@@ -1485,7 +1517,100 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -1551,11 +1676,13 @@ var _default =
       isDownloading: false,
       isSelected: null,
       fileList: [], //文件列表
-      lightMode: '',
+      lightMode: 'MODE01',
       valueListen: '', //监听的数据
       isMuted: false,
       isSingle: false,
-      isAll: false };
+      isAll: false,
+      isPlayWhenBoot: false,
+      isTimingCancel: false };
 
   },
   methods: {
@@ -1563,24 +1690,35 @@ var _default =
     LightBack: function LightBack() {
       this.isSettingLight = false;
     },
+    //选择灯模式方法
+    ChangeLightMode: function ChangeLightMode(e) {
+      this.lightMode = e.detail.value;
+      console.log(this.lightMode);
+    },
     //下载文件
     DownLoadData: function DownLoadData() {var _this = this;
+      console.log("下载文件");
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
       if (!this.isDownloading && this.devices.length != 0) {
         this.isDownloading = true;
-        console.log("下载文件");
         wx.notifyBLECharacteristicValueChange({
           deviceId: this.devices[0].deviceId,
           serviceId: this.primaryServiceUUID,
           characteristicId: this.readUUID,
           state: true,
           success: function success(res) {
-            wx.showToast({
+            uni.showToast({
               title: "打开监听Notify成功",
               icon: "none" });
 
           },
           fail: function fail(res) {
-            wx.showToast({
+            uni.showToast({
               title: "打开监听Nofity失败",
               icon: 'none' });
 
@@ -1600,7 +1738,7 @@ var _default =
                   for (var cnt = 1; cnt <= fileNum; cnt++) {
                     _this.fileList.push(cnt);
                   }
-                  wx.showToast({
+                  uni.showToast({
                     title: "成功读取" + fileNum + "个文件",
                     icon: "none" });
 
@@ -1612,7 +1750,7 @@ var _default =
           }
           setTimeout(function () {
             if (_this.fileList.length == 0) {
-              wx.showToast({
+              uni.showToast({
                 title: "读取失败, 请再试一次",
                 icon: "none" });
 
@@ -1636,14 +1774,14 @@ var _default =
             success: function success(res) {
               console.log("发送成功");
               console.log(u8Arr.buffer);
-              wx.showToast({
+              uni.showToast({
                 title: "发送成功",
                 icon: "none" });
 
             },
             fail: function fail() {
               console.log("发送失败");
-              wx.showToast({
+              uni.showToast({
                 title: "发送失败",
                 icon: "none" });
 
@@ -1667,56 +1805,22 @@ var _default =
       console.log("灯模式");
       this.isSettingLight = true;
     },
-    //选择灯模式
-    SelectLight: function SelectLight(e) {
-      this.lightMode = e.currentTarget.id;
-      console.log(this.lightMode);
-    },
     //下发灯模式信息
     UploadLightMode: function UploadLightMode() {
       console.log("更新灯模式");
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x03);
-      numArr.push(0x17);
-      numArr.push(Number(this.lightMode.substr(5, 1)));
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("发送数据成功");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "更新灯模式成功",
-            icon: "none" });
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
 
-        },
-        fail: function fail(res) {
-          console.log("发送数据失败");
-          wx.showToast({
-            title: "更新灯模式失败",
-            icon: "none" });
-
-        } });
-
-    },
-    //静音或取消静音
-    Mute: function Mute() {var _this2 = this;
-      //如果处于静音模式就取消静音, 下发取消静音指令
-      if (this.isMuted) {
-        this.isMuted = false;
-        getApp().globalData.isMuted = this.isMuted;
-        console.log("取消静音");
-        // var message = "AT+MUTEDIS"
+      this.isSettingLight = false;
+      if (this.devices.length) {
         var numArr = new Array();
         numArr.push(0x7E);
         numArr.push(0x03);
-        numArr.push(0x15);
-        numArr.push(0x00);
+        numArr.push(0x17);
+        numArr.push(Number(this.lightMode.substr(5, 1)));
         numArr.push(0xEF);
         var u8Arr = new Uint8Array(numArr);
         wx.writeBLECharacteristicValue({
@@ -1727,158 +1831,230 @@ var _default =
           success: function success(res) {
             console.log("发送数据成功");
             console.log(u8Arr.buffer);
-            wx.showToast({
-              title: "取消静音成功",
+            uni.showToast({
+              title: "更新灯模式成功",
               icon: "none" });
 
           },
           fail: function fail(res) {
             console.log("发送数据失败");
-            wx.showToast({
-              title: "取消静音失败",
-              icon: "none" });
-
-          } });
-
-      } else {//下发静音指令
-        console.log("静音");
-        var _numArr = new Array();
-        _numArr.push(0x7E);
-        _numArr.push(0x03);
-        _numArr.push(0x15);
-        _numArr.push(0x01);
-        _numArr.push(0xEF);
-        var _u8Arr = new Uint8Array(_numArr);
-        wx.writeBLECharacteristicValue({
-          deviceId: this.devices[0].deviceId,
-          serviceId: this.primaryServiceUUID,
-          characteristicId: this.writeUUID,
-          value: _u8Arr.buffer,
-          success: function success(res) {
-            console.log("发送数据成功");
-            console.log(_u8Arr.buffer);
-            wx.showToast({
-              title: "静音成功",
-              icon: "none" });
-
-            _this2.isMuted = true;
-            getApp().globalData.isMuted = _this2.isMuted;
-          },
-          fail: function fail(res) {
-            console.log("发送数据失败");
-            wx.showToast({
-              title: "静音失败",
+            uni.showToast({
+              title: "更新灯模式失败",
               icon: "none" });
 
           } });
 
       }
     },
+    //静音或取消静音
+    Mute: function Mute() {var _this2 = this;
+      //如果处于静音模式就取消静音, 下发取消静音指令
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      if (this.isMuted) {
+        console.log("取消静音");
+        if (this.devices.length) {
+          var numArr = new Array();
+          numArr.push(0x7E);
+          numArr.push(0x03);
+          numArr.push(0x15);
+          numArr.push(0x00);
+          numArr.push(0xEF);
+          var u8Arr = new Uint8Array(numArr);
+          wx.writeBLECharacteristicValue({
+            deviceId: this.devices[0].deviceId,
+            serviceId: this.primaryServiceUUID,
+            characteristicId: this.writeUUID,
+            value: u8Arr.buffer,
+            success: function success(res) {
+              console.log("发送数据成功");
+              console.log(u8Arr.buffer);
+              _this2.isMuted = false;
+              getApp().globalData.isMuted = _this2.isMuted;
+              uni.showToast({
+                title: "取消静音成功",
+                icon: "none" });
+
+            },
+            fail: function fail(res) {
+              console.log("发送数据失败");
+              uni.showToast({
+                title: "取消静音失败",
+                icon: "none" });
+
+            } });
+
+        }
+      } else {//下发静音指令
+        console.log("静音");
+        if (this.devices.length) {
+          var _numArr = new Array();
+          _numArr.push(0x7E);
+          _numArr.push(0x03);
+          _numArr.push(0x15);
+          _numArr.push(0x01);
+          _numArr.push(0xEF);
+          var _u8Arr = new Uint8Array(_numArr);
+          wx.writeBLECharacteristicValue({
+            deviceId: this.devices[0].deviceId,
+            serviceId: this.primaryServiceUUID,
+            characteristicId: this.writeUUID,
+            value: _u8Arr.buffer,
+            success: function success(res) {
+              console.log("发送数据成功");
+              console.log(_u8Arr.buffer);
+              _this2.isMuted = true;
+              getApp().globalData.isMuted = _this2.isMuted;
+              uni.showToast({
+                title: "静音成功",
+                icon: "none" });
+
+              _this2.isMuted = true;
+              getApp().globalData.isMuted = _this2.isMuted;
+            },
+            fail: function fail(res) {
+              console.log("发送数据失败");
+              uni.showToast({
+                title: "静音失败",
+                icon: "none" });
+
+            } });
+
+        }
+      }
+    },
     //下发单曲指令
     Single: function Single() {var _this3 = this;
       console.log("单曲");
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x02);
-      numArr.push(0x21);
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      // var message = "AT+ONLY"
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("发送数据成功");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "设置单曲播放成功",
-            icon: "none" });
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
 
-          _this3.isSingle = true;
-          _this3.isAll = false;
-          getApp().globalData.isSingle = _this3.isSingle;
-          getApp().globalData.isAll = _this3.isAll;
-        },
-        fail: function fail(res) {
-          console.log("发送数据失败");
-          wx.showToast({
-            title: "设置单曲播放失败",
-            icon: "none" });
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x21);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("发送数据成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "设置单曲播放成功",
+              icon: "none" });
 
-        } });
+            _this3.isSingle = true;
+            _this3.isAll = false;
+            getApp().globalData.isSingle = _this3.isSingle;
+            getApp().globalData.isAll = _this3.isAll;
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败");
+            uni.showToast({
+              title: "设置单曲播放失败",
+              icon: "none" });
 
+          } });
+
+      }
     },
     //下发循环指令
     All: function All() {var _this4 = this;
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
       console.log("循环");
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x02);
-      numArr.push(0x16);
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      // var message = "AT+ALL"
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("发送数据成功");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "设置循环播放成功",
-            icon: "none" });
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x16);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        // var message = "AT+ALL"
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("发送数据成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "设置循环播放成功",
+              icon: "none" });
 
-          _this4.isSingle = false;
-          _this4.isAll = true;
-          getApp().globalData.isSingle = _this4.isSingle;
-          getApp().globalData.isAll = _this4.isAll;
-        },
-        fail: function fail(res) {
-          console.log("发送数据失败");
-          wx.showToast({
-            title: "设置循坏播放失败",
-            icon: "none" });
+            _this4.isSingle = false;
+            _this4.isAll = true;
+            getApp().globalData.isSingle = _this4.isSingle;
+            getApp().globalData.isAll = _this4.isAll;
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败");
+            uni.showToast({
+              title: "设置循坏播放失败",
+              icon: "none" });
 
-        } });
+          } });
 
+      }
     },
     //下发删除指令
-    Delete: function Delete() {
+    Delete: function Delete() {var _this5 = this;
       console.log("删除");
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x03);
-      numArr.push(0x14);
-      numArr.push(this.isSelected + 1);
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("发送数据成功");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "删除文件成功",
-            icon: "none" });
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
 
-        },
-        fail: function fail(res) {
-          console.log("发送数据失败 " + res.errMsg);
-          wx.showToast({
-            title: "删除文件失败",
-            icon: "none" });
+      if (this.devices.length && this.isSelected) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x03);
+        numArr.push(0x14);
+        numArr.push(this.isSelected + 1);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("发送数据成功");
+            console.log(u8Arr.buffer);
+            _this5.fileList.splice(_this5.isSelected, 1);
+            _this5.isSelected = null;
+            uni.showToast({
+              title: "删除文件成功",
+              icon: "none" });
 
-        } });
+          },
+          fail: function fail(res) {
+            console.log("发送数据失败 " + res.errMsg);
+            uni.showToast({
+              title: "删除文件失败",
+              icon: "none" });
 
-      this.fileList.splice(this.isSelected, 1);
-      this.isSelected = null;
+          } });
+
+      }
     },
     //选中文件单选框方法
     Select: function Select(e) {
@@ -1887,65 +2063,359 @@ var _default =
     },
     //试听方法
     Play: function Play(e) {
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x04);
-      numArr.push(0x41);
-      numArr.push((parseInt(e.currentTarget.id) + 1 & 0xFF00) >> 8);
-      numArr.push(parseInt(e.currentTarget.id) + 1 & 0x00FF);
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("成功发送试听命令");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "成功发送试听命令",
-            icon: 'none' });
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
 
-        },
-        fail: function fail(res) {
-          console.log("发送试听命令失败");
-          wx.showToast({
-            title: "发送试听命令失败",
-            icon: 'none' });
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x04);
+        numArr.push(0x41);
+        numArr.push((parseInt(e.currentTarget.id) + 1 & 0xFF00) >> 8);
+        numArr.push(parseInt(e.currentTarget.id) + 1 & 0x00FF);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("成功发送试听命令");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "成功发送试听命令",
+              icon: 'none' });
 
-        } });
+          },
+          fail: function fail(res) {
+            console.log("发送试听命令失败");
+            uni.showToast({
+              title: "发送试听命令失败",
+              icon: 'none' });
 
+          } });
+
+      }
     },
-    PlayWhenBoot: function PlayWhenBoot() {
+    //上电播放方法
+    PlayWhenBoot: function PlayWhenBoot() {var _this6 = this;
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
       console.log("上电播放");
-      var numArr = new Array();
-      numArr.push(0x7E);
-      numArr.push(0x02);
-      numArr.push(0x22);
-      numArr.push(0xEF);
-      var u8Arr = new Uint8Array(numArr);
-      wx.writeBLECharacteristicValue({
-        deviceId: this.devices[0].deviceId,
-        serviceId: this.primaryServiceUUID,
-        characteristicId: this.writeUUID,
-        value: u8Arr.buffer,
-        success: function success(res) {
-          console.log("上电播放发送成功");
-          console.log(u8Arr.buffer);
-          wx.showToast({
-            title: "上电播放发送成功",
-            icon: 'none' });
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x22);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("上电播放发送成功");
+            console.log(u8Arr.buffer);
+            _this6.isPlayWhenBoot = true;
+            getApp().globalData.isPlayWhenBoot = _this6.isPlayWhenBoot;
+            uni.showToast({
+              title: "上电播放发送成功",
+              icon: 'none' });
 
-        },
-        fail: function fail(res) {
-          console.log("上电播放发送失败");
-          wx.showToast({
-            title: "上电播放发送失败",
-            icon: 'none' });
+          },
+          fail: function fail(res) {
+            console.log("上电播放发送失败");
+            uni.showToast({
+              title: "上电播放发送失败",
+              icon: 'none' });
 
-        } });
+          } });
 
+      }
+    },
+    //开关机方法
+    ShutdownBoot: function ShutdownBoot() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log('开关机');
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x82);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("开关机成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "开关机成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("开关机失败");
+            uni.showToast({
+              title: "开关机失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //取消定时方法
+    TimingCancel: function TimingCancel() {var _this7 = this;
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log('取消定时');
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x84);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("取消定时成功");
+            console.log(u8Arr.buffer);
+            _this7.isTimingCancel = true;
+            getApp().globalData.isTimingCancel = true;
+            uni.showToast({
+              title: "取消定时成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("取消定时失败");
+            uni.showToast({
+              title: "取消定时失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //上一首方法
+    Last: function Last() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log("上一首");
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x85);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("上一首发送成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "上一首发送成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("上一首发送失败");
+            uni.showToast({
+              title: "上一首发送失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //下一首方法
+    Next: function Next() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log("下一首");
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x86);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("下一首发送成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "下一首发送成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("下一首发送失败");
+            uni.showToast({
+              title: "下一首发送失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //停止方法
+    Stop: function Stop() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log("停止");
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x83);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("停止发送成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "停止发送成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("停止发送失败");
+            uni.showToast({
+              title: "停止发送失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //音量加方法
+    VolumeIncrease: function VolumeIncrease() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log("音量加");
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x80);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("音量加发送成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "音量加发送成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("音量加发送失败");
+            uni.showToast({
+              title: "音量加发送失败",
+              icon: 'none' });
+
+          } });
+
+      }
+    },
+    //音量减方法
+    VolumeDecrease: function VolumeDecrease() {
+      uni.showToast({
+        title: '请稍后...',
+        icon: 'loading',
+        duration: 1000,
+        mask: true });
+
+      console.log("音量减");
+      if (this.devices.length) {
+        var numArr = new Array();
+        numArr.push(0x7E);
+        numArr.push(0x02);
+        numArr.push(0x81);
+        numArr.push(0xEF);
+        var u8Arr = new Uint8Array(numArr);
+        wx.writeBLECharacteristicValue({
+          deviceId: this.devices[0].deviceId,
+          serviceId: this.primaryServiceUUID,
+          characteristicId: this.writeUUID,
+          value: u8Arr.buffer,
+          success: function success(res) {
+            console.log("音量减发送成功");
+            console.log(u8Arr.buffer);
+            uni.showToast({
+              title: "音量减发送成功",
+              icon: 'none' });
+
+          },
+          fail: function fail(res) {
+            console.log("音量减发送失败");
+            uni.showToast({
+              title: "音量减发送失败",
+              icon: 'none' });
+
+          } });
+
+      }
     } },
 
   beforeCreate: function beforeCreate() {
@@ -1959,11 +2429,14 @@ var _default =
     this.isMuted = getApp().globalData.isMuted;
     this.isSingle = getApp().globalData.isSingle;
     this.isAll = getApp().globalData.isAll;
+    this.isTimingCancel = getApp().globalData.isTimingCancel;
+    this.isPlayWhenBoot = getApp().globalData.isPlayWhenBoot;
     //在页面创建时打开BLE Notify监听
   },
   mounted: function mounted() {
 
   } };exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
 /***/ }),
 /* 30 */

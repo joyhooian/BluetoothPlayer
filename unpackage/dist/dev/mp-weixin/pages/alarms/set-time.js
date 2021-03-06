@@ -208,8 +208,8 @@ var _default =
 
       volume: 15,
       relayStatus: false,
-      startTime: '12:00',
-      stopTime: '12:00' };
+      startTime: '19:00',
+      stopTime: '20:00' };
 
   },
   methods: {
@@ -276,43 +276,28 @@ var _default =
           else {
               try {
                 this.alarmsInfo.forEach(function (alarm, index) {
-                  //如果星期一致则比较开始时间
-                  if (tempWeekday[0] == alarm.weekdays[0]) {
-                    if (_this.startTime <= alarm.startTime) {
-                      _this.alarmsInfo.splice(index, 0, {
-                        weekdays: tempWeekday,
-                        volume: _this.volume,
-                        relayStatus: _this.relayStatus,
-                        startTime: _this.startTime,
-                        stopTime: _this.stopTime,
-                        isUsing: false });
+                  if (_this.startTime <= alarm.startTime) {
+                    _this.alarmsInfo.splice(index, 0, {
+                      weekdays: tempWeekday,
+                      volume: _this.volume,
+                      relayStatus: _this.relayStatus,
+                      startTime: _this.startTime,
+                      stopTime: _this.stopTime,
+                      isUsing: false });
 
-                      throw new Error("结束比较");
-                    }
+                    throw new Error("结束比较");
+                  } else
+                  if (index == _this.alarmsInfo.length - 1) {
+                    _this.alarmsInfo.push({
+                      weekdays: tempWeekday,
+                      volume: _this.volume,
+                      relayStatus: _this.relayStatus,
+                      startTime: _this.startTime,
+                      stopTime: _this.stopTime,
+                      isUsing: false });
+
+                    throw new Error("结束比较");
                   }
-                  //比较星期
-                  else if (tempWeekday[0] < alarm.weekdays[0]) {
-                      _this.alarmsInfo.splice(index, 0, {
-                        weekdays: tempWeekday,
-                        volume: _this.volume,
-                        relayStatus: _this.relayStatus,
-                        startTime: _this.startTime,
-                        stopTime: _this.stopTime,
-                        isUsing: false });
-
-                      throw new Error("结束比较");
-                    }
-                    //如果是最靠后的就直接添加
-                    else if (index == _this.alarmsInfo.length - 1) {
-                        _this.alarmsInfo.push({
-                          weekdays: tempWeekday,
-                          volume: _this.volume,
-                          relayStatus: _this.relayStatus,
-                          startTime: _this.startTime,
-                          stopTime: _this.stopTime,
-                          isUsing: false });
-
-                      }
                 });
               } catch (e) {
                 if (e.message != "结束比较") throw e;
@@ -335,42 +320,28 @@ var _default =
               //比较更改后的元素与数组内的先后顺序
               this.alarmsInfo.forEach(function (alarm, index) {
                 //如果星期一致则比较开始时间
-                if (tempWeekday[0] == alarm.weekdays[0]) {
-                  if (_this.startTime <= alarm.startTime) {
-                    _this.alarmsInfo.splice(index, 0, {
-                      weekdays: tempWeekday,
-                      volume: _this.volume,
-                      relayStatus: _this.relayStatus,
-                      startTime: _this.startTime,
-                      stopTime: _this.stopTime,
-                      isUsing: tempUsing });
+                if (_this.startTime <= alarm.startTime) {
+                  _this.alarmsInfo.splice(index, 0, {
+                    weekdays: tempWeekday,
+                    volume: _this.volume,
+                    relayStatus: _this.relayStatus,
+                    startTime: _this.startTime,
+                    stopTime: _this.stopTime,
+                    isUsing: false });
 
-                    throw new Error("结束比较");
-                  }
+                  throw new Error("结束比较");
+                } else
+                if (index == _this.alarmsInfo.length - 1) {
+                  _this.alarmsInfo.push({
+                    weekdays: tempWeekday,
+                    volume: _this.volume,
+                    relayStatus: _this.relayStatus,
+                    startTime: _this.startTime,
+                    stopTime: _this.stopTime,
+                    isUsing: false });
+
+                  throw new Error("结束比较");
                 }
-                //比较星期
-                else if (tempWeekday[0] < alarm.weekdays[0]) {
-                    _this.alarmsInfo.splice(index, 0, {
-                      weekdays: tempWeekday,
-                      volume: _this.volume,
-                      relayStatus: _this.relayStatus,
-                      startTime: _this.startTime,
-                      stopTime: _this.stopTime,
-                      isUsing: tempUsing });
-
-                    throw new Error("结束比较");
-                  }
-                  //如果是最靠后的就直接添加
-                  else if (index == _this.alarmsInfo.length - 1) {
-                      _this.alarmsInfo.push({
-                        weekdays: tempWeekday,
-                        volume: _this.volume,
-                        relayStatus: _this.relayStatus,
-                        startTime: _this.startTime,
-                        stopTime: _this.stopTime,
-                        isUsing: tempUsing });
-
-                    }
               });
             } catch (e) {
               if (e.message != "结束比较") throw e;
@@ -388,6 +359,8 @@ var _default =
 
   created: function created() {
     this.alarmsInfo = getApp().globalData.alarmsInfo;
+    this.startTime = new Date().toString().split(' ')[4].substr(0, 5);
+    this.stopTime = this.startTime;
   },
   onLoad: function onLoad(e) {var _this2 = this;
     if (e.index) {

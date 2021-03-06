@@ -20,12 +20,17 @@
 			isMuted: false,
 			isSingle: false,
 			isAll: false,
+			isPlayWhenBoot: false,
+			isTimingCancel: false,
 			alarmShow: {
 				isSetTime: false,
 				isTimeAfter: false
 			}
 		},
 		onLaunch: function() {
+			wx.setKeepScreenOn({
+				keepScreenOn: true
+			})
 			// AT指令打包
 			Vue.prototype.MessageToArrayBuffer = (msg) => {
 				let message = msg

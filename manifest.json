@@ -1,9 +1,9 @@
 {
-    "name" : "锦亨源智能之家",
+    "name" : "语音感应器智能助手",
     "appid" : "__UNI__45FD051",
     "description" : "",
-    "versionName" : "ColorUi for UniApp 2.1.4",
-    "versionCode" : 214,
+    "versionName" : "BluetoothPlayer 2.0.1",
+    "versionCode" : 201,
     "transformPx" : false,
     "app-plus" : {
         /* 5+App特有相关 */
@@ -54,10 +54,13 @@
             "es6" : true,
             "postcss" : true,
             "minified" : true
+        },
+        "uniStatistics" : {
+            "enable" : false
         }
     },
     "h5" : {
-        "title" : "ColorUi for UniApp",
+        "title" : "BluetoothPlayer",
         "domain" : "demo.color-ui.com"
     }
 }

@@ -43,7 +43,7 @@
 				<view class="cu-item">
 					<view class="centent">是否启用</view>
 					<view class="action">
-						<switch @change="ChagngUsing" :id="index"></switch>
+						<switch @change="ChagngUsing" :id="index" :checked="item.isUsing"></switch>
 					</view>
 				</view>
 			</view>
@@ -125,7 +125,7 @@
 					//如果是重复时间设置
 					if (this.alarmShow.isSetTime) {
 						console.log("上传时间设定")
-						let alarmsMessage = new Array
+						let alarmsMessage = new Array()
 						//遍历每个生效的设置组
 						this.alarmsInfo.forEach((alarm, index) => {
 							if (alarm.isUsing) {
@@ -155,6 +155,7 @@
 								title: "请启用要设置的任务!",
 								icon: "none"
 							})
+							this.uploadLoading = false
 						} else if (this.primaryServiceUUID != '' && this.writeUUID != ''){
 							console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
 							//遍历命令数组并间隔发送
@@ -175,7 +176,33 @@
 									})
 								}, 200 * index)
 							})
-						} 
+							setTimeout(() => {
+								let u8Arr = new Uint8Array([0x7E, 0x02, 0x55, 0xEF])
+								wx.writeBLECharacteristicValue({
+									deviceId: this.devices[0].deviceId,
+									serviceId: this.primaryServiceUUID,
+									characteristicId: this.writeUUID,
+									value: u8Arr.buffer,
+									success: (res) => {
+										console.log("发送成功")
+										console.log(u8Arr.buffer)
+									},
+									fail: (res) => {
+										console.log('发送失败')
+									},
+									complete: () => {
+										this.uploadLoading = false
+									}
+								})
+							}, 200 * alarmsMessage.length)
+						} else {
+							console.log(alarmsMessage)
+							wx.showToast({
+								title: '请连接设备！',
+								icon: 'none'
+							})
+							this.uploadLoading = false
+						}
 					} 
 					//如果是时间间隔设定
 					else if (this.alarmShow.isTimeAfter) {

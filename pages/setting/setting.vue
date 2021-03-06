@@ -3,9 +3,8 @@
 		<cu-custom bgColor="bg-gradual-red">
 			<block slot="content">设置</block>
 		</cu-custom>
-		<!-- 上部操作栏 -->
+		<!-- 	
 		<view class="cu-bar bg-white shadow shadow-blur radius-bottom" :style="{position: 'fixed', left: 0, width: '100%', top:CustomBar + 'px', zIndex: 1000}">
-			<!-- 左侧操作按钮 -->
 			<view class="action">
 				<button v-if="!isSettingLight" class="cu-btn round lines-red" @click="Delete"><text>删除</text></button>
 				<button v-else class="cu-btn round lines-black sm" @click="LightBack"><text class="text-sm">返回</text></button>
@@ -15,15 +14,108 @@
 				<button v-if="!isSettingLight" @click="Mute" class="cu-btn round margin-right-xs" :class="isMuted?'bg-red':'lines-black'"><text>静音</text></button>
 				<button v-if="!isSettingLight" @click="All" class="cu-btn round margin-right-xs" :class="isAll?'bg-red':'lines-black'"><text>循环</text></button>
 				<button v-if="!isSettingLight" @click="Single" class="cu-btn round margin-right-xs" :class="isSingle?'bg-red':'lines-black'"><text>单曲</text></button>
-				<button v-if="isSettingLight" id="MODE01" @click="SelectLight" :class="lightMode=='MODE01'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式一</text></button>
-				<button v-if="isSettingLight" id="MODE02" @click="SelectLight" :class="lightMode=='MODE02'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式二</text></button>
-				<button v-if="isSettingLight" id="MODE03" @click="SelectLight" :class="lightMode=='MODE03'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式三</text></button>
-				<button v-if="isSettingLight" id="MODE04" @click="SelectLight" :class="lightMode=='MODE04'?'bg-red':'lines-black'" class="cu-btn round sm margin-right-xs"><text class="text-xs">模式四</text></button>
+				<button v-if="isSettingLight" id="MODE01" @click="SelectLight" :class="lightMode=='MODE01'?'bg-red':'lines-black'"
+				 class="cu-btn round sm margin-right-xs"><text class="text-xs">模式一</text></button>
+				<button v-if="isSettingLight" id="MODE02" @click="SelectLight" :class="lightMode=='MODE02'?'bg-red':'lines-black'"
+				 class="cu-btn round sm margin-right-xs"><text class="text-xs">模式二</text></button>
+				<button v-if="isSettingLight" id="MODE03" @click="SelectLight" :class="lightMode=='MODE03'?'bg-red':'lines-black'"
+				 class="cu-btn round sm margin-right-xs"><text class="text-xs">模式三</text></button>
+				<button v-if="isSettingLight" id="MODE04" @click="SelectLight" :class="lightMode=='MODE04'?'bg-red':'lines-black'"
+				 class="cu-btn round sm margin-right-xs"><text class="text-xs">模式四</text></button>
 				<button v-if="!isSettingLight" @click="PlayWhenBoot" class="cu-btn round lines-black margin-right-xs"><text class="text-xs">上电播放</text></button>
 				<button v-if="!isSettingLight" @click="LightMode" class="cu-btn round lines-black"><text>灯</text></button>
 				<button v-if="isSettingLight" @click="UploadLightMode" class="cu-btn round lines-black sm"><text class="text-sm">确定</text></button>
 			</view>
 		</view>
+	-->
+
+		<!-- 上部操作栏 -->
+		<view class="cu-bar">
+			<view class="cu-list grid col-5">
+				<view class="cu-item" @click="Delete">
+					<text>删除</text>
+				</view>
+				<view class="cu-item" @click="ShutdownBoot">
+					<text>开关机</text>
+				</view>
+				<view class="cu-item" @click="TimingCancel" :class="isTimingCancel?'bg-red light':''">
+					<text>取消定时</text>
+				</view>
+				<view class="cu-item" @click="PlayWhenBoot" :class="isPlayWhenBoot?'bg-red light':''">
+					<text>上电播放</text>
+				</view>
+				<view class="cu-item" @click="LightMode">
+					<text>灯模式</text>
+				</view>
+				<view class="cu-item" @click="All" :class="isAll?'bg-red light':''">
+					<text>循环</text>
+				</view>
+				<view class="cu-item" @click="Single" :class="isSingle?'bg-red light':''">
+					<text>单曲</text>
+				</view>
+				<view class="cu-item" @click="Last">
+					<text>上一曲</text>
+				</view>
+				<view class="cu-item" @click="Next">
+					<text>下一曲</text>
+				</view>
+				<view class="cu-item" @click="Stop">
+					<text>停止</text>
+				</view>
+				<view class="cu-item" @click="Mute" :class="isMuted?'bg-red light':''">
+					<text>静音</text>
+				</view>
+				<view class="cu-item" @click="VolumeIncrease">
+					<text>音量加</text>
+				</view>
+				<view class="cu-item" @click="VolumeDecrease">
+					<text>音量减</text>
+				</view>
+			</view>
+		</view>
+		<!-- 灯模式模态框 -->
+		<view class="cu-modal" :class="isSettingLight?'show':''">
+			<view class="cu-dialog">
+				<view class="cu-bar bg-white justify-end">
+					<view class="content">选择灯模式</view>
+				</view>
+				<radio-group class="block" @change="ChangeLightMode">
+					<view class="cu-list menu text-left">
+						<view class="cu-item">
+							<label class="flex justify-between align-center flex-sub">
+								<view class="flex-sub">模式一</view>
+								<radio class="round" :class="lightMode=='MODE01'?'checked':''" :value="'MODE01'" :checked="lightMode=='MODE01'?true:false"></radio>
+							</label>
+						</view>
+						<view class="cu-item">
+							<label class="flex justify-between align-center flex-sub">
+								<view class="flex-sub">模式二</view>
+								<radio class="round" :class="lightMode=='MODE02'?'checked':''" :value="'MODE02'" :checked="lightMode=='MODE02'?true:false"></radio>
+							</label>
+						</view>
+						<view class="cu-item">
+							<label class="flex justify-between align-center flex-sub">
+								<view class="flex-sub">模式三</view>
+								<radio class="round" :class="lightMode=='MODE03'?'checked':''" :value="'MODE03'" :checked="lightMode=='MODE03'?true:false"></radio>
+							</label>
+						</view>
+						<view class="cu-item">
+							<label class="flex justify-between align-center flex-sub">
+								<view class="flex-sub">模式四</view>
+								<radio class="round" :class="lightMode=='MODE04'?'checked':''" :value="'MODE04'" :checked="lightMode=='MODE04'?true:false"></radio>
+							</label>
+						</view>
+					</view>
+				</radio-group>
+				<view class="cu-bar bg-white justify-end">
+					<view class="action">
+						<button class="cu-btn line-red text-red" @tap="LightBack">取消</button>
+						<button class="cu-btn bg-green margin-left" @tap="UploadLightMode">确定</button>
+					</view>
+				</view>
+			</view>
+		</view>
+
 		<!-- 文件列表 -->
 		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu margin-top sm-border">
@@ -40,6 +132,7 @@
 				</view>
 			</view>
 		</view>
+		
 		<!-- 底部操作按钮 -->
 		<view class="bottomBox">
 			<view class="flex justify-center">
@@ -64,11 +157,13 @@
 				isDownloading: false,
 				isSelected: null,
 				fileList: [], //文件列表
-				lightMode: '',
+				lightMode: 'MODE01',
 				valueListen: '', //监听的数据
 				isMuted: false,
 				isSingle: false,
-				isAll: false
+				isAll: false,
+				isPlayWhenBoot: false,
+				isTimingCancel: false
 			}
 		},
 		methods: {
@@ -76,44 +171,55 @@
 			LightBack() {
 				this.isSettingLight = false
 			},
+			//选择灯模式方法
+			ChangeLightMode(e) {
+				this.lightMode = e.detail.value
+				console.log(this.lightMode)
+			},
 			//下载文件
 			DownLoadData() {
-				if(!this.isDownloading && this.devices.length != 0) {
-					this.isDownloading  = true
-					console.log("下载文件")
+				console.log("下载文件")
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				if (!this.isDownloading && this.devices.length != 0) {
+					this.isDownloading = true
 					wx.notifyBLECharacteristicValueChange({
 						deviceId: this.devices[0].deviceId,
 						serviceId: this.primaryServiceUUID,
 						characteristicId: this.readUUID,
 						state: true,
 						success: (res) => {
-							wx.showToast({
+							uni.showToast({
 								title: "打开监听Notify成功",
 								icon: "none"
 							})
 						},
 						fail: (res) => {
-							wx.showToast({
+							uni.showToast({
 								title: "打开监听Nofity失败",
 								icon: 'none'
 							})
 						}
-					})	
+					})
 					wx.onBLECharacteristicValueChange((res) => {
 						wx.offBLECharacteristicValueChange()
 						let u8Arr = new Uint8Array(res.value)
 						console.log(u8Arr)
 						let testArr = [0x7E, 0x04, 0x20]
-						for(let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
-							for(let cnt2 = 0; cnt2 < 3; cnt2++) {
-								if(u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
-									if(cnt2 == 2) {
+						for (let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+							for (let cnt2 = 0; cnt2 < 3; cnt2++) {
+								if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+									if (cnt2 == 2) {
 										this.fileList = []
 										let fileNum = (u8Arr[cnt1 + cnt2 + 1] << 8) | (u8Arr[cnt1 + cnt2 + 2])
 										for (let cnt = 1; cnt <= fileNum; cnt++) {
 											this.fileList.push(cnt)
 										}
-										wx.showToast({
+										uni.showToast({
 											title: "成功读取" + fileNum + "个文件",
 											icon: "none"
 										})
@@ -125,7 +231,7 @@
 						}
 						setTimeout(() => {
 							if (this.fileList.length == 0) {
-								wx.showToast({
+								uni.showToast({
 									title: "读取失败, 请再试一次",
 									icon: "none"
 								})
@@ -149,14 +255,14 @@
 							success: (res) => {
 								console.log("发送成功")
 								console.log(u8Arr.buffer)
-								wx.showToast({
+								uni.showToast({
 									title: "发送成功",
 									icon: "none"
 								})
 							},
 							fail: () => {
 								console.log("发送失败")
-								wx.showToast({
+								uni.showToast({
 									title: "发送失败",
 									icon: "none"
 								})
@@ -180,56 +286,22 @@
 				console.log("灯模式")
 				this.isSettingLight = true
 			},
-			//选择灯模式
-			SelectLight(e) {
-				this.lightMode = e.currentTarget.id
-				console.log(this.lightMode)
-			},
 			//下发灯模式信息
 			UploadLightMode() {
 				console.log("更新灯模式")
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x03)
-				numArr.push(0x17)
-				numArr.push(Number(this.lightMode.substr(5, 1)))
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("发送数据成功")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "更新灯模式成功",
-							icon: "none"
-						})
-					},
-					fail: (res) => {
-						console.log("发送数据失败")
-						wx.showToast({
-							title: "更新灯模式失败",
-							icon: "none"
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
-			},
-			//静音或取消静音
-			Mute() {
-				//如果处于静音模式就取消静音, 下发取消静音指令
-				if (this.isMuted){
-					this.isMuted = false
-					getApp().globalData.isMuted = this.isMuted
-					console.log("取消静音")
-					// var message = "AT+MUTEDIS"
+				this.isSettingLight = false
+				if (this.devices.length) {
 					let numArr = new Array()
 					numArr.push(0x7E)
 					numArr.push(0x03)
-					numArr.push(0x15)
-					numArr.push(0x00)
+					numArr.push(0x17)
+					numArr.push(Number(this.lightMode.substr(5, 1)))
 					numArr.push(0xEF)
 					let u8Arr = new Uint8Array(numArr)
 					wx.writeBLECharacteristicValue({
@@ -240,158 +312,230 @@
 						success: (res) => {
 							console.log("发送数据成功")
 							console.log(u8Arr.buffer)
-							wx.showToast({
-								title: "取消静音成功",
+							uni.showToast({
+								title: "更新灯模式成功",
 								icon: "none"
 							})
 						},
 						fail: (res) => {
 							console.log("发送数据失败")
-							wx.showToast({
-								title: "取消静音失败",
-								icon: "none"
-							})
-						}
-					})
-				} else { //下发静音指令
-					console.log("静音")
-					let numArr = new Array()
-					numArr.push(0x7E)
-					numArr.push(0x03)
-					numArr.push(0x15)
-					numArr.push(0x01)
-					numArr.push(0xEF)
-					let u8Arr = new Uint8Array(numArr)
-					wx.writeBLECharacteristicValue({
-						deviceId: this.devices[0].deviceId,
-						serviceId: this.primaryServiceUUID,
-						characteristicId: this.writeUUID,
-						value: u8Arr.buffer,
-						success: (res) => {
-							console.log("发送数据成功")
-							console.log(u8Arr.buffer)
-							wx.showToast({
-								title: "静音成功",
-								icon: "none"
-							})
-							this.isMuted = true
-							getApp().globalData.isMuted = this.isMuted
-						},
-						fail: (res) => {
-							console.log("发送数据失败")
-							wx.showToast({
-								title: "静音失败",
+							uni.showToast({
+								title: "更新灯模式失败",
 								icon: "none"
 							})
 						}
 					})
 				}
 			},
+			//静音或取消静音
+			Mute() {
+				//如果处于静音模式就取消静音, 下发取消静音指令
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				if (this.isMuted) {
+					console.log("取消静音")
+					if (this.devices.length) {
+						let numArr = new Array()
+						numArr.push(0x7E)
+						numArr.push(0x03)
+						numArr.push(0x15)
+						numArr.push(0x00)
+						numArr.push(0xEF)
+						let u8Arr = new Uint8Array(numArr)
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: u8Arr.buffer,
+							success: (res) => {
+								console.log("发送数据成功")
+								console.log(u8Arr.buffer)
+								this.isMuted = false
+								getApp().globalData.isMuted = this.isMuted
+								uni.showToast({
+									title: "取消静音成功",
+									icon: "none"
+								})
+							},
+							fail: (res) => {
+								console.log("发送数据失败")
+								uni.showToast({
+									title: "取消静音失败",
+									icon: "none"
+								})
+							}
+						})
+					}
+				} else { //下发静音指令
+					console.log("静音")
+					if (this.devices.length) {
+						let numArr = new Array()
+						numArr.push(0x7E)
+						numArr.push(0x03)
+						numArr.push(0x15)
+						numArr.push(0x01)
+						numArr.push(0xEF)
+						let u8Arr = new Uint8Array(numArr)
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: u8Arr.buffer,
+							success: (res) => {
+								console.log("发送数据成功")
+								console.log(u8Arr.buffer)
+								this.isMuted = true
+								getApp().globalData.isMuted = this.isMuted
+								uni.showToast({
+									title: "静音成功",
+									icon: "none"
+								})
+								this.isMuted = true
+								getApp().globalData.isMuted = this.isMuted
+							},
+							fail: (res) => {
+								console.log("发送数据失败")
+								uni.showToast({
+									title: "静音失败",
+									icon: "none"
+								})
+							}
+						})
+					}
+				}
+			},
 			//下发单曲指令
 			Single() {
 				console.log("单曲")
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x02)
-				numArr.push(0x21)
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				// var message = "AT+ONLY"
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("发送数据成功")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "设置单曲播放成功",
-							icon: "none"
-						})
-						this.isSingle = true
-						this.isAll = false
-						getApp().globalData.isSingle = this.isSingle
-						getApp().globalData.isAll = this.isAll
-					},
-					fail: (res) => {
-						console.log("发送数据失败")
-						wx.showToast({
-							title: "设置单曲播放失败",
-							icon: "none"
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x21)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("发送数据成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "设置单曲播放成功",
+								icon: "none"
+							})
+							this.isSingle = true
+							this.isAll = false
+							getApp().globalData.isSingle = this.isSingle
+							getApp().globalData.isAll = this.isAll
+						},
+						fail: (res) => {
+							console.log("发送数据失败")
+							uni.showToast({
+								title: "设置单曲播放失败",
+								icon: "none"
+							})
+						}
+					})
+				}
 			},
 			//下发循环指令
 			All() {
-				console.log("循环")
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x02)
-				numArr.push(0x16)
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				// var message = "AT+ALL"
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("发送数据成功")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "设置循环播放成功",
-							icon: "none"
-						})
-						this.isSingle = false
-						this.isAll = true
-						getApp().globalData.isSingle = this.isSingle
-						getApp().globalData.isAll = this.isAll
-					},
-					fail: (res) => {
-						console.log("发送数据失败")
-						wx.showToast({
-							title: "设置循坏播放失败",
-							icon: "none"
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
+				console.log("循环")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x16)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					// var message = "AT+ALL"
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("发送数据成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "设置循环播放成功",
+								icon: "none"
+							})
+							this.isSingle = false
+							this.isAll = true
+							getApp().globalData.isSingle = this.isSingle
+							getApp().globalData.isAll = this.isAll
+						},
+						fail: (res) => {
+							console.log("发送数据失败")
+							uni.showToast({
+								title: "设置循坏播放失败",
+								icon: "none"
+							})
+						}
+					})
+				}
 			},
 			//下发删除指令
 			Delete() {
 				console.log("删除")
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x03)
-				numArr.push(0x14)
-				numArr.push(this.isSelected + 1)
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("发送数据成功")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "删除文件成功",
-							icon: "none"
-						})
-					},
-					fail: (res) => {
-						console.log("发送数据失败 " + res.errMsg)
-						wx.showToast({
-							title: "删除文件失败",
-							icon: "none"
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
-				this.fileList.splice(this.isSelected, 1)
-				this.isSelected = null
+				if (this.devices.length && this.isSelected) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x03)
+					numArr.push(0x14)
+					numArr.push(this.isSelected + 1)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("发送数据成功")
+							console.log(u8Arr.buffer)
+							this.fileList.splice(this.isSelected, 1)
+							this.isSelected = null
+							uni.showToast({
+								title: "删除文件成功",
+								icon: "none"
+							})
+						},
+						fail: (res) => {
+							console.log("发送数据失败 " + res.errMsg)
+							uni.showToast({
+								title: "删除文件失败",
+								icon: "none"
+							})
+						}
+					})
+				}
 			},
 			//选中文件单选框方法
 			Select(e) {
@@ -400,65 +544,359 @@
 			},
 			//试听方法
 			Play(e) {
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x04)
-				numArr.push(0x41)
-				numArr.push(((parseInt(e.currentTarget.id) + 1) & 0xFF00) >> 8)
-				numArr.push((parseInt(e.currentTarget.id) + 1) & 0x00FF)
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("成功发送试听命令")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "成功发送试听命令",
-							icon: 'none'
-						})
-					},
-					fail: (res) => {
-						console.log("发送试听命令失败")
-						wx.showToast({
-							title: "发送试听命令失败",
-							icon: 'none'
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x04)
+					numArr.push(0x41)
+					numArr.push(((parseInt(e.currentTarget.id) + 1) & 0xFF00) >> 8)
+					numArr.push((parseInt(e.currentTarget.id) + 1) & 0x00FF)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("成功发送试听命令")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "成功发送试听命令",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("发送试听命令失败")
+							uni.showToast({
+								title: "发送试听命令失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
 			},
+			//上电播放方法
 			PlayWhenBoot() {
-				console.log("上电播放")
-				let numArr = new Array()
-				numArr.push(0x7E)
-				numArr.push(0x02)
-				numArr.push(0x22)
-				numArr.push(0xEF)
-				let u8Arr = new Uint8Array(numArr)
-				wx.writeBLECharacteristicValue({
-					deviceId: this.devices[0].deviceId,
-					serviceId: this.primaryServiceUUID,
-					characteristicId: this.writeUUID,
-					value: u8Arr.buffer,
-					success: (res) => {
-						console.log("上电播放发送成功")
-						console.log(u8Arr.buffer)
-						wx.showToast({
-							title: "上电播放发送成功",
-							icon: 'none'
-						})
-					},
-					fail: (res) => {
-						console.log("上电播放发送失败")
-						wx.showToast({
-							title: "上电播放发送失败",
-							icon: 'none'
-						})
-					}
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
 				})
+				console.log("上电播放")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x22)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("上电播放发送成功")
+							console.log(u8Arr.buffer)
+							this.isPlayWhenBoot = true
+							getApp().globalData.isPlayWhenBoot = this.isPlayWhenBoot
+							uni.showToast({
+								title: "上电播放发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("上电播放发送失败")
+							uni.showToast({
+								title: "上电播放发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//开关机方法
+			ShutdownBoot() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log('开关机')
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x82)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("开关机成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "开关机成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("开关机失败")
+							uni.showToast({
+								title: "开关机失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//取消定时方法
+			TimingCancel() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log('取消定时')
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x84)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("取消定时成功")
+							console.log(u8Arr.buffer)
+							this.isTimingCancel = true
+							getApp().globalData.isTimingCancel = true
+							uni.showToast({
+								title: "取消定时成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("取消定时失败")
+							uni.showToast({
+								title: "取消定时失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//上一首方法
+			Last() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log("上一首")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x85)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("上一首发送成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "上一首发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("上一首发送失败")
+							uni.showToast({
+								title: "上一首发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//下一首方法
+			Next() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log("下一首")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x86)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("下一首发送成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "下一首发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("下一首发送失败")
+							uni.showToast({
+								title: "下一首发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//停止方法
+			Stop() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log("停止")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x83)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("停止发送成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "停止发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("停止发送失败")
+							uni.showToast({
+								title: "停止发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//音量加方法
+			VolumeIncrease() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log("音量加")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x80)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("音量加发送成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "音量加发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("音量加发送失败")
+							uni.showToast({
+								title: "音量加发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
+			},
+			//音量减方法
+			VolumeDecrease() {
+				uni.showToast({
+					title: '请稍后...',
+					icon: 'loading',
+					duration: 1000,
+					mask: true
+				})
+				console.log("音量减")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x02)
+					numArr.push(0x81)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log("音量减发送成功")
+							console.log(u8Arr.buffer)
+							uni.showToast({
+								title: "音量减发送成功",
+								icon: 'none'
+							})
+						},
+						fail: (res) => {
+							console.log("音量减发送失败")
+							uni.showToast({
+								title: "音量减发送失败",
+								icon: 'none'
+							})
+						}
+					})
+				}
 			}
 		},
 		beforeCreate() {
@@ -472,16 +910,18 @@
 			this.isMuted = getApp().globalData.isMuted
 			this.isSingle = getApp().globalData.isSingle
 			this.isAll = getApp().globalData.isAll
+			this.isTimingCancel = getApp().globalData.isTimingCancel
+			this.isPlayWhenBoot = getApp().globalData.isPlayWhenBoot
 			//在页面创建时打开BLE Notify监听
 		},
 		mounted() {
-			
+
 		}
 	}
 </script>
 
 <style>
-.bottomBox {
+	.bottomBox {
 		position: fixed;
 		margin: auto;
 		bottom: 60rpx;

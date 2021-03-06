@@ -4728,10 +4728,10 @@ scroll-view.cu-steps .cu-item {
 
 
 .bottomBox {
-		position: fixed;
-		margin: auto;
-		bottom: 60rpx;
-		left: 0;
-		right: 0;
+	position: fixed;
+	margin: auto;
+	bottom: 60rpx;
+	left: 0;
+	right: 0;
 }
 

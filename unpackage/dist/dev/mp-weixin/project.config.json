@@ -12,20 +12,22 @@
   "compileType": "miniprogram",
   "libVersion": "",
   "appid": "wx0d322d6cc5550006",
-  "projectname": "锦亨源智能之家",
-  "simulatorType": "wechat",
-  "simulatorPluginLibVersion": {},
+  "projectname": "语音感应器智能助手",
   "condition": {
     "search": {
+      "current": -1,
       "list": []
     },
     "conversation": {
+      "current": -1,
       "list": []
     },
     "game": {
+      "current": -1,
       "list": []
     },
     "miniprogram": {
+      "current": 0,
       "list": [
         {
           "name": "链接",

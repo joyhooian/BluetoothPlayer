@@ -32,7 +32,7 @@
 			<view class="cu-item arrow">
 				<view class="content">开始时间</view>
 				<view class="action">
-					<picker mode="time" start="00:00" end="23:59" @change="ChangeStartTime">
+					<picker mode="time" start="00:00" end="23:59" :value="startTime" @change="ChangeStartTime">
 						<view class="picker">
 							{{startTime}}
 						</view>
@@ -42,7 +42,7 @@
 			<view class="cu-item arrow">
 				<view class="content">结束时间</view>
 				<view class="action">
-					<picker mode="time" start="00:00" end="23:59" @change="ChangeStopTime">
+					<picker mode="time" start="00:00" end="23:59" :value="stopTime" @change="ChangeStopTime">
 						<view class="picker">
 							{{stopTime}}
 						</view>
@@ -78,8 +78,8 @@
 				],
 				volume: 15,
 				relayStatus: false,
-				startTime: '12:00',
-				stopTime: '12:00'
+				startTime: '19:00',
+				stopTime: '20:00'
 			}
 		},
 		methods: {
@@ -146,33 +146,17 @@
 						else {
 							try {
 								this.alarmsInfo.forEach((alarm, index) => {
-									//如果星期一致则比较开始时间
-									if (tempWeekday[0] == alarm.weekdays[0]) {
-										if (this.startTime <= alarm.startTime) {
-											this.alarmsInfo.splice(index, 0, {
-												weekdays: tempWeekday,
-												volume: this.volume,
-												relayStatus: this.relayStatus,
-												startTime: this.startTime,
-												stopTime: this.stopTime,
-												isUsing: false,
-											})
-											throw new Error("结束比较")
-										}
-									} 
-									//比较星期
-									else if (tempWeekday[0] < alarm.weekdays[0]) {
+									if (this.startTime <= alarm.startTime) {
 										this.alarmsInfo.splice(index, 0, {
 											weekdays: tempWeekday,
 											volume: this.volume,
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
-											isUsing: false
+											isUsing: false,
 										})
 										throw new Error("结束比较")
 									} 
-									//如果是最靠后的就直接添加
 									else if (index == this.alarmsInfo.length - 1) {
 										this.alarmsInfo.push({
 											weekdays: tempWeekday,
@@ -182,6 +166,7 @@
 											stopTime: this.stopTime,
 											isUsing: false
 										})
+										throw new Error("结束比较")
 									}
 								})
 							} catch(e) {
@@ -205,32 +190,17 @@
 								//比较更改后的元素与数组内的先后顺序
 								this.alarmsInfo.forEach((alarm, index) => {
 									//如果星期一致则比较开始时间
-									if (tempWeekday[0] == alarm.weekdays[0]) {
-										if (this.startTime <= alarm.startTime) {
-											this.alarmsInfo.splice(index, 0, {
-												weekdays: tempWeekday,
-												volume: this.volume,
-												relayStatus: this.relayStatus,
-												startTime: this.startTime,
-												stopTime: this.stopTime,
-												isUsing: tempUsing,
-											})
-											throw new Error("结束比较")
-										}
-									} 
-									//比较星期
-									else if (tempWeekday[0] < alarm.weekdays[0]) {
+									if (this.startTime <= alarm.startTime) {
 										this.alarmsInfo.splice(index, 0, {
 											weekdays: tempWeekday,
 											volume: this.volume,
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
-											isUsing: tempUsing,
+											isUsing: false,
 										})
 										throw new Error("结束比较")
 									} 
-									//如果是最靠后的就直接添加
 									else if (index == this.alarmsInfo.length - 1) {
 										this.alarmsInfo.push({
 											weekdays: tempWeekday,
@@ -238,8 +208,9 @@
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
-											isUsing: tempUsing,
+											isUsing: false
 										})
+										throw new Error("结束比较")
 									}
 								})
 							} catch(e) {
@@ -258,6 +229,8 @@
 		},
 		created() {
 			this.alarmsInfo = getApp().globalData.alarmsInfo
+			this.startTime = new Date().toString().split(' ')[4].substr(0,5)
+			this.stopTime = this.startTime
 		},
 		onLoad(e) {
 			if (e.index) {
