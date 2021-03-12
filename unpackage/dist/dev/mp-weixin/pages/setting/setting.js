@@ -443,17 +443,17 @@ var _default =
 
       }
     },
-    //静音或取消静音
+    //到点循环或取消到点循环
     Mute: function Mute() {var _this2 = this;
-      //如果处于静音模式就取消静音, 下发取消静音指令
+      //如果处于到点循环模式就取消到点循环, 下发取消到点循环指令
       uni.showToast({
-        title: '请稍后...',
+        title: '到点循环...',
         icon: 'loading',
         duration: 1000,
         mask: true });
 
       if (this.isMuted) {
-        console.log("取消静音");
+        console.log("取消到点循环");
         if (this.devices.length) {
           var numArr = new Array();
           numArr.push(0x7E);
@@ -473,21 +473,21 @@ var _default =
               _this2.isMuted = false;
               getApp().globalData.isMuted = _this2.isMuted;
               uni.showToast({
-                title: "取消静音成功",
+                title: "到点循环成功",
                 icon: "none" });
 
             },
             fail: function fail(res) {
               console.log("发送数据失败");
               uni.showToast({
-                title: "取消静音失败",
+                title: "到点循环失败",
                 icon: "none" });
 
             } });
 
         }
-      } else {//下发静音指令
-        console.log("静音");
+      } else {//下发到点循环指令
+        console.log("到点循环");
         if (this.devices.length) {
           var _numArr = new Array();
           _numArr.push(0x7E);
@@ -507,7 +507,7 @@ var _default =
               _this2.isMuted = true;
               getApp().globalData.isMuted = _this2.isMuted;
               uni.showToast({
-                title: "静音成功",
+                title: "到点循环成功",
                 icon: "none" });
 
               _this2.isMuted = true;
@@ -516,7 +516,7 @@ var _default =
             fail: function fail(res) {
               console.log("发送数据失败");
               uni.showToast({
-                title: "静音失败",
+                title: "到点循环失败",
                 icon: "none" });
 
             } });
@@ -528,7 +528,7 @@ var _default =
     Single: function Single() {var _this3 = this;
       console.log("单曲");
       uni.showToast({
-        title: '请稍后...',
+        title: '单曲',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -570,7 +570,7 @@ var _default =
     //下发循环指令
     All: function All() {var _this4 = this;
       uni.showToast({
-        title: '请稍后...',
+        title: '循环...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -615,7 +615,7 @@ var _default =
     Delete: function Delete() {var _this5 = this;
       console.log("删除");
       uni.showToast({
-        title: '请稍后...',
+        title: '删除...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -638,6 +638,7 @@ var _default =
             console.log(u8Arr.buffer);
             _this5.fileList.splice(_this5.isSelected, 1);
             _this5.isSelected = null;
+            uni.hideToast();
             uni.showToast({
               title: "删除文件成功",
               icon: "none" });
@@ -661,7 +662,7 @@ var _default =
     //试听方法
     Play: function Play(e) {
       uni.showToast({
-        title: '请稍后...',
+        title: '试听...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -701,7 +702,7 @@ var _default =
     //上电播放方法
     PlayWhenBoot: function PlayWhenBoot() {var _this6 = this;
       uni.showToast({
-        title: '请稍后...',
+        title: '上电播放...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -742,7 +743,7 @@ var _default =
     //开关机方法
     ShutdownBoot: function ShutdownBoot() {
       uni.showToast({
-        title: '请稍后...',
+        title: '开关机...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -781,12 +782,12 @@ var _default =
     //取消定时方法
     TimingCancel: function TimingCancel() {var _this7 = this;
       uni.showToast({
-        title: '请稍后...',
+        title: '定时...',
         icon: 'loading',
         duration: 1000,
         mask: true });
 
-      console.log('取消定时');
+      console.log('定时');
       if (this.devices.length) {
         var numArr = new Array();
         numArr.push(0x7E);
@@ -800,19 +801,19 @@ var _default =
           characteristicId: this.writeUUID,
           value: u8Arr.buffer,
           success: function success(res) {
-            console.log("取消定时成功");
+            console.log("定时成功");
             console.log(u8Arr.buffer);
             _this7.isTimingCancel = true;
             getApp().globalData.isTimingCancel = true;
             uni.showToast({
-              title: "取消定时成功",
+              title: "定时成功",
               icon: 'none' });
 
           },
           fail: function fail(res) {
-            console.log("取消定时失败");
+            console.log("定时失败");
             uni.showToast({
-              title: "取消定时失败",
+              title: "定时失败",
               icon: 'none' });
 
           } });
@@ -822,7 +823,7 @@ var _default =
     //上一首方法
     Last: function Last() {
       uni.showToast({
-        title: '请稍后...',
+        title: '上一首...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -861,7 +862,7 @@ var _default =
     //下一首方法
     Next: function Next() {
       uni.showToast({
-        title: '请稍后...',
+        title: '下一首...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -900,7 +901,7 @@ var _default =
     //停止方法
     Stop: function Stop() {
       uni.showToast({
-        title: '请稍后...',
+        title: '停止...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -939,7 +940,7 @@ var _default =
     //音量加方法
     VolumeIncrease: function VolumeIncrease() {
       uni.showToast({
-        title: '请稍后...',
+        title: '音量加...',
         icon: 'loading',
         duration: 1000,
         mask: true });
@@ -978,7 +979,7 @@ var _default =
     //音量减方法
     VolumeDecrease: function VolumeDecrease() {
       uni.showToast({
-        title: '请稍后...',
+        title: '音量减...',
         icon: 'loading',
         duration: 1000,
         mask: true });

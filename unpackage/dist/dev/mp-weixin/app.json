@@ -23,5 +23,6 @@
     "load": "/pages/load/load",
     "setting": "/pages/setting/setting",
     "cu-custom": "/colorui/components/cu-custom"
-  }
+  },
+  "sitemapLocation": "sitemap41.json"
 }

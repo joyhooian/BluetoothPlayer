@@ -11,7 +11,7 @@
 			</view>
 			<view class="content text-bold"></view>
 			<view class="action">
-				<button v-if="!isSettingLight" @click="Mute" class="cu-btn round margin-right-xs" :class="isMuted?'bg-red':'lines-black'"><text>静音</text></button>
+				<button v-if="!isSettingLight" @click="Mute" class="cu-btn round margin-right-xs" :class="isMuted?'bg-red':'lines-black'"><text>到点循环</text></button>
 				<button v-if="!isSettingLight" @click="All" class="cu-btn round margin-right-xs" :class="isAll?'bg-red':'lines-black'"><text>循环</text></button>
 				<button v-if="!isSettingLight" @click="Single" class="cu-btn round margin-right-xs" :class="isSingle?'bg-red':'lines-black'"><text>单曲</text></button>
 				<button v-if="isSettingLight" id="MODE01" @click="SelectLight" :class="lightMode=='MODE01'?'bg-red':'lines-black'"
@@ -38,19 +38,19 @@
 				<view class="cu-item" @click="ShutdownBoot">
 					<text>开关机</text>
 				</view>
-				<view class="cu-item" @click="TimingCancel" :class="isTimingCancel?'bg-red light':''">
-					<text>取消定时</text>
+				<view class="cu-item" @click="TimingCancel">
+					<text>定时</text>
 				</view>
-				<view class="cu-item" @click="PlayWhenBoot" :class="isPlayWhenBoot?'bg-red light':''">
+				<view class="cu-item" @click="PlayWhenBoot">
 					<text>上电播放</text>
 				</view>
 				<view class="cu-item" @click="LightMode">
 					<text>灯模式</text>
 				</view>
-				<view class="cu-item" @click="All" :class="isAll?'bg-red light':''">
+				<view class="cu-item" @click="All">
 					<text>循环</text>
 				</view>
-				<view class="cu-item" @click="Single" :class="isSingle?'bg-red light':''">
+				<view class="cu-item" @click="Single">
 					<text>单曲</text>
 				</view>
 				<view class="cu-item" @click="Last">
@@ -62,8 +62,8 @@
 				<view class="cu-item" @click="Stop">
 					<text>停止</text>
 				</view>
-				<view class="cu-item" @click="Mute" :class="isMuted?'bg-red light':''">
-					<text>静音</text>
+				<view class="cu-item" @click="Mute">
+					<text>到点循环</text>
 				</view>
 				<view class="cu-item" @click="VolumeIncrease">
 					<text>音量加</text>
@@ -327,17 +327,17 @@
 					})
 				}
 			},
-			//静音或取消静音
+			//到点循环或取消到点循环
 			Mute() {
-				//如果处于静音模式就取消静音, 下发取消静音指令
+				//如果处于到点循环模式就取消到点循环, 下发取消到点循环指令
 				uni.showToast({
-					title: '请稍后...',
+					title: '到点循环...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
 				})
 				if (this.isMuted) {
-					console.log("取消静音")
+					console.log("取消到点循环")
 					if (this.devices.length) {
 						let numArr = new Array()
 						numArr.push(0x7E)
@@ -357,21 +357,21 @@
 								this.isMuted = false
 								getApp().globalData.isMuted = this.isMuted
 								uni.showToast({
-									title: "取消静音成功",
+									title: "到点循环成功",
 									icon: "none"
 								})
 							},
 							fail: (res) => {
 								console.log("发送数据失败")
 								uni.showToast({
-									title: "取消静音失败",
+									title: "到点循环失败",
 									icon: "none"
 								})
 							}
 						})
 					}
-				} else { //下发静音指令
-					console.log("静音")
+				} else { //下发到点循环指令
+					console.log("到点循环")
 					if (this.devices.length) {
 						let numArr = new Array()
 						numArr.push(0x7E)
@@ -391,7 +391,7 @@
 								this.isMuted = true
 								getApp().globalData.isMuted = this.isMuted
 								uni.showToast({
-									title: "静音成功",
+									title: "到点循环成功",
 									icon: "none"
 								})
 								this.isMuted = true
@@ -400,7 +400,7 @@
 							fail: (res) => {
 								console.log("发送数据失败")
 								uni.showToast({
-									title: "静音失败",
+									title: "到点循环失败",
 									icon: "none"
 								})
 							}
@@ -412,7 +412,7 @@
 			Single() {
 				console.log("单曲")
 				uni.showToast({
-					title: '请稍后...',
+					title: '单曲',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -454,7 +454,7 @@
 			//下发循环指令
 			All() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '循环...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -499,7 +499,7 @@
 			Delete() {
 				console.log("删除")
 				uni.showToast({
-					title: '请稍后...',
+					title: '删除...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -522,6 +522,7 @@
 							console.log(u8Arr.buffer)
 							this.fileList.splice(this.isSelected, 1)
 							this.isSelected = null
+							uni.hideToast()
 							uni.showToast({
 								title: "删除文件成功",
 								icon: "none"
@@ -545,7 +546,7 @@
 			//试听方法
 			Play(e) {
 				uni.showToast({
-					title: '请稍后...',
+					title: '试听...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -585,7 +586,7 @@
 			//上电播放方法
 			PlayWhenBoot() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '上电播放...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -626,7 +627,7 @@
 			//开关机方法
 			ShutdownBoot() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '开关机...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -665,12 +666,12 @@
 			//取消定时方法
 			TimingCancel() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '定时...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
 				})
-				console.log('取消定时')
+				console.log('定时')
 				if (this.devices.length) {
 					let numArr = new Array()
 					numArr.push(0x7E)
@@ -684,19 +685,19 @@
 						characteristicId: this.writeUUID,
 						value: u8Arr.buffer,
 						success: (res) => {
-							console.log("取消定时成功")
+							console.log("定时成功")
 							console.log(u8Arr.buffer)
 							this.isTimingCancel = true
 							getApp().globalData.isTimingCancel = true
 							uni.showToast({
-								title: "取消定时成功",
+								title: "定时成功",
 								icon: 'none'
 							})
 						},
 						fail: (res) => {
-							console.log("取消定时失败")
+							console.log("定时失败")
 							uni.showToast({
-								title: "取消定时失败",
+								title: "定时失败",
 								icon: 'none'
 							})
 						}
@@ -706,7 +707,7 @@
 			//上一首方法
 			Last() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '上一首...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -745,7 +746,7 @@
 			//下一首方法
 			Next() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '下一首...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -784,7 +785,7 @@
 			//停止方法
 			Stop() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '停止...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -823,7 +824,7 @@
 			//音量加方法
 			VolumeIncrease() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '音量加...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true
@@ -862,7 +863,7 @@
 			//音量减方法
 			VolumeDecrease() {
 				uni.showToast({
-					title: '请稍后...',
+					title: '音量减...',
 					icon: 'loading',
 					duration: 1000,
 					mask: true

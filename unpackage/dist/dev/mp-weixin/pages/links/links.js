@@ -184,6 +184,15 @@ var _self;var _default =
       wx.getBluetoothAdapterState({
         success: function success(res) {
           if (res.available) {
+            wx.onBLEConnectionStateChange(function (res) {
+              if (!res.connected) {
+                _self.devices[0].status = "disconnected";
+                wx.showToast({
+                  title: "失去蓝牙链接",
+                  icon: "none" });
+
+              }
+            });
             _self.searchingLoading = true;
             //打开[蓝牙发现]
             wx.startBluetoothDevicesDiscovery({
@@ -313,6 +322,7 @@ var _self;var _default =
       if (_self.devices[e.currentTarget.id].status == "connected") {
         _self.devices[e.currentTarget.id].status = "changingStatus";
         //断开BLE设备连接
+        wx.offBLEConnectionStateChange();
         wx.closeBLEConnection({
           deviceId: _self.devices[e.currentTarget.id].deviceId,
           //断开成功
@@ -340,6 +350,15 @@ var _self;var _default =
       else if (_self.devices[e.currentTarget.id].status == "disconnected") {
           _self.devices[e.currentTarget.id].status = "changingStatus";
           //蓝牙连接BLE设备
+          wx.onBLEConnectionStateChange(function (res) {
+            if (!res.connected) {
+              _self.devices[0].status = "disconnected";
+              wx.showToast({
+                title: "失去蓝牙链接",
+                icon: "none" });
+
+            }
+          });
           wx.createBLEConnection({
             deviceId: _self.devices[e.currentTarget.id].deviceId,
             success: function success() {
