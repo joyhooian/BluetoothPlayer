@@ -126,7 +126,7 @@
 					<view class="action">
 						<view class="flex padding align-center">
 							<button class="cu-btn sm round bg-red margin-right-sm" :id="index" @click="Play">试听</button>
-							<radio :id="index" class="checked" :checked="isSelected==index?true:false" @click="Select"></radio>
+							<radio :id="index" class="checked" :checked="(isSelected - 1)==index?true:false" @click="Select"></radio>
 						</view>
 					</view>
 				</view>
@@ -509,7 +509,7 @@
 					numArr.push(0x7E)
 					numArr.push(0x03)
 					numArr.push(0x14)
-					numArr.push(this.isSelected + 1)
+					numArr.push(this.isSelected)
 					numArr.push(0xEF)
 					let u8Arr = new Uint8Array(numArr)
 					wx.writeBLECharacteristicValue({
@@ -520,7 +520,7 @@
 						success: (res) => {
 							console.log("发送数据成功")
 							console.log(u8Arr.buffer)
-							this.fileList.splice(this.isSelected, 1)
+							this.fileList.splice(this.isSelected - 1, 1)
 							this.isSelected = null
 							uni.hideToast()
 							uni.showToast({
@@ -536,12 +536,14 @@
 							})
 						}
 					})
+				} else {
+					console.log("未选择")
 				}
 			},
 			//选中文件单选框方法
 			Select(e) {
-				this.isSelected = parseInt(e.currentTarget.id)
-				console.log("文件" + (this.isSelected + 1) + "被选中")
+				this.isSelected = parseInt(e.currentTarget.id) + 1
+				console.log("文件" + this.isSelected + "被选中")
 			},
 			//试听方法
 			Play(e) {
