@@ -64,6 +64,9 @@
 				return u8Arr.buffer
 			},
 			autoLinkDevice() {
+				if (this.searchingLoading){
+					return
+				}
 				//查看蓝牙适配器状态
 				wx.getBluetoothAdapterState({
 					success: (res) => {

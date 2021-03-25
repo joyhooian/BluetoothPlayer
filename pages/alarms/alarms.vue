@@ -17,31 +17,37 @@
 		<view v-if="alarmShow.isSetTime" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu card-menu margin-top sm-border" v-for="(item, index) in alarmsInfo" :key="index">
 				<view class="cu-item">
-					<view class="centent">{{"编号 " + (index + 1)}}</view>
+					<view class="content">{{"编号 " + (index + 1)}}</view>
 					<view class="action">
 						<button class="cu-btn radius bg-green" :id="index" @click="Edit">编辑</button>
 					</view>
 				</view>
 				<view class="cu-item">
-					<view class="centent">时间</view>
+					<view class="content">时间</view>
 					<view class="action">
 						<text>{{item.startTime + ' - ' + item.stopTime}}</text>
 					</view>
 				</view>
 				<view class="cu-item">
-					<view class="centent">重复</view>
+					<view class="content">重复</view>
 					<view class="action">
 						<view v-for="(weekday, weekdayNum) in alarmsInfo[index].weekdays" :key="weekdayNum" class="cu-tag light sm round bg-red">{{weekdaysString[weekday].string}}</view>
 					</view>
 				</view>
 				<view class="cu-item">
-					<view class="centent">{{'音量 ' + item.volume}}</view>
+					<view class="content">{{'音量 ' + item.volume}}</view>
 					<view class="action">
 						<text>{{item.relayStatus?'继电器 开':'继电器 关'}}</text>
 					</view>
 				</view>
+				<view class="cu-item arrow" @click="ShowFileModal" :id="index">
+					<view class="content">音频</view>
+					<view class="action">
+						<text>{{item.selectedFile == null ? "请选择" : item.selectedFile}}</text>
+					</view>
+				</view>
 				<view class="cu-item">
-					<view class="centent">是否启用</view>
+					<view class="content">是否启用</view>
 					<view class="action">
 						<switch @change="ChagngUsing" :id="index" :checked="item.isUsing"></switch>
 					</view>
@@ -52,17 +58,50 @@
 		<view v-if="alarmShow.isTimeAfter" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu card-menu margin-top sm-border">
 				<view class="cu-item">
-					<view class="centent">间隔播放</view>
+					<view class="content">间隔播放</view>
 				</view>
 				<view class="cu-item">
-					<view class="centent">{{"音量" + timeAfterInfo.volume}}</view>
+					<view class="content">{{"音量" + timeAfterInfo.volume}}</view>
 					<view class="action">{{timeAfterInfo.relayStatus?"继电器开":"继电器关"}}</view>
 				</view>
 				<view class="cu-item">
-					<view class="centent">间隔时间</view>
+					<view class="content">间隔时间</view>
 					<view class="action">{{timeAfterInfo.secAfter + "S"}}</view>
 				</view>
+				<view class="cu-item arrow" @click="ShowFileModal" :id="0">
+					<view class="content">音频</view>
+					<view class="action">
+						<text>{{timeAfterInfo.selectedFile == null ? "请选择" : timeAfterInfo.selectedFile}}</text>
+					</view>
+				</view>
 			</view>
+		</view>
+
+		<view class="cu-modal" :class="isShowFileModal ? 'show' : ''">
+			<view class="cu-dialog">
+				<view class="cu-bar bg-white justify-end">
+					<view class="content">选择音频</view>
+				</view>
+				<radio-group v-if="fileList.length > 0" class="block" @change="FileChange">
+					<view class="cu-list menu text-left">
+						<view class="cu-item" v-for="file in fileList" :key="file">
+							<label class="flex justify-between align-center flex-sub">
+								<view class="flex-sub">音频 {{file}}</view>
+								<radio class="round" :class="alarmsInfo[currentAlarmIndex].selectedFile == file ? 'checked' : ''" :checked="alarmsInfo[currentAlarmIndex].selectedFile==file?true:false"
+								 :value="file"></radio>
+							</label>
+						</view>
+					</view>
+				</radio-group>
+				<view v-else class="margin padding">没有音频文件</view>
+				<view class="cu-bar bg-white justify-end">
+					<view class="action">
+						<button class="cu-btn bg-blue" @tap="UpdateFile">同步文件</button>
+						<button class="cu-btn bg-green margin-left" @tap="hideFileModal">确定</button>
+					</view>
+				</view>
+			</view>
+
 		</view>
 		<!-- 底部按钮 -->
 		<view class="bottomBox">
@@ -90,15 +129,39 @@
 				alarmsInfo: [],
 				alarmShow: {},
 				timeAfterInfo: {},
-				weekdaysString: [ 
-					{index: 0, string: '周一'},
-					{index: 1, string: '周二'},
-					{index: 2, string: '周三'},
-					{index: 3, string: '周四'},
-					{index: 4, string: '周五'},
-					{index: 5, string: '周六'},
-					{index: 6, string: '周日'},
-				]
+				weekdaysString: [{
+						index: 0,
+						string: '周一'
+					},
+					{
+						index: 1,
+						string: '周二'
+					},
+					{
+						index: 2,
+						string: '周三'
+					},
+					{
+						index: 3,
+						string: '周四'
+					},
+					{
+						index: 4,
+						string: '周五'
+					},
+					{
+						index: 5,
+						string: '周六'
+					},
+					{
+						index: 6,
+						string: '周日'
+					},
+				],
+				fileList: [],
+				selectedFile: null,
+				currentAlarmIndex: null,
+				isShowFileModal: false
 			}
 		},
 		methods: {
@@ -108,7 +171,7 @@
 					uni.navigateTo({
 						url: '/pages/alarms/set-time'
 					})
-				} 
+				}
 				//否则跳转到时间间隔设置页面
 				else if (e.currentTarget.id === 'time-after') {
 					uni.navigateTo({
@@ -139,8 +202,9 @@
 								numArr.push(Number(alarm.stopTime.substr(0, 2)))
 								numArr.push(Number(alarm.stopTime.substr(3, 2)))
 								numArr.push(alarm.volume)
-								numArr.push(alarm.relayStatus?0x01:0x00)
-								alarm.weekdays.forEach((weekday)=>{
+								numArr.push(alarm.relayStatus ? 0x01 : 0x00)
+								numArr.push(alarm.selectedFile?alarm.selectedFile:0)
+								alarm.weekdays.forEach((weekday) => {
 									numArr.push(weekday + 1)
 								})
 								numArr.push(0xEF)
@@ -149,14 +213,13 @@
 							}
 						})
 						//如果没有时间设置组生效则提醒
-						if (alarmsMessage.length == 0)
-						{
+						if (alarmsMessage.length == 0) {
 							wx.showToast({
 								title: "请启用要设置的任务!",
 								icon: "none"
 							})
 							this.uploadLoading = false
-						} else if (this.primaryServiceUUID != '' && this.writeUUID != ''){
+						} else if (this.primaryServiceUUID != '' && this.writeUUID != '') {
 							console.log("发送消息至: Service " + this.primaryServiceUUID + " Write " + this.writeUUID)
 							//遍历命令数组并间隔发送
 							alarmsMessage.forEach((msg, index) => {
@@ -203,7 +266,7 @@
 							})
 							this.uploadLoading = false
 						}
-					} 
+					}
 					//如果是时间间隔设定
 					else if (this.alarmShow.isTimeAfter) {
 						console.log("上传间隔时间")
@@ -215,7 +278,8 @@
 						numArr.push((this.timeAfterInfo.secAfter & 0xFF00) >> 8)
 						numArr.push(this.timeAfterInfo.secAfter & 0x00FF)
 						numArr.push(this.timeAfterInfo.volume)
-						numArr.push(this.timeAfterInfo.relayStatus?0x01:0x00)
+						numArr.push(this.timeAfterInfo.relayStatus ? 0x01 : 0x00)
+						numArr.push(this.timeAfterInfo.selectedFile ? this.timeAfterInfo.selectedFile : 0)
 						numArr.push(0xEF)
 						let u8Arr = new Uint8Array(numArr)
 						wx.writeBLECharacteristicValue({
@@ -241,11 +305,112 @@
 				uni.navigateTo({
 					url: '/pages/alarms/set-time?index=' + e.currentTarget.id
 				})
+			},
+			Download() {
+				if (this.primaryServiceUUID) {
+					wx.notifyBLECharacteristicValueChange({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.readUUID,
+						state: true,
+						success: () => {
+							console.log("打开监听成功")
+						},
+						fail: () => {
+							console.log("打开监听失败")
+							return
+						}
+					})
+					wx.onBLECharacteristicValueChange((res) => {
+						let u8Arr = new Uint8Array(res.value)
+						console.log(u8Arr)
+						let testArr = [0x7E, 0x04, 0x20]
+						for (let cnt1 = 0; cnt1 < u8Arr.length; cnt1++) {
+							for (let cnt2 = 0; cnt2 < 3; cnt2++) {
+								if (u8Arr[cnt1 + cnt2] == testArr[cnt2]) {
+									if (cnt2 == 2) {
+										this.fileList = []
+										let fileNum = (u8Arr[cnt1 + cnt2 + 1] << 8) | (u8Arr[cnt1 + cnt2 + 2])
+										for (let cnt = 1; cnt <= fileNum; cnt++) {
+											this.fileList.push(cnt)
+										}
+										console.log("成功读取" + fileNum + "个文件")
+										uni.showToast({
+											title: "成功读取" + fileNum + "个文件",
+											icon: "none"
+										})
+									}
+								} else {
+									uni.showToast({
+										title: "文件读取失败",
+										icon: "none"
+									})
+									return
+									break;
+								}
+							}
+						}
+					})
+					setTimeout(() => {
+						let numArr = new Array()
+						numArr.push(0x7E)
+						numArr.push(0x02)
+						numArr.push(0x19)
+						numArr.push(0xEF)
+						let u8Arr = new Uint8Array(numArr)
+						wx.writeBLECharacteristicValue({
+							deviceId: this.devices[0].deviceId,
+							serviceId: this.primaryServiceUUID,
+							characteristicId: this.writeUUID,
+							value: u8Arr.buffer,
+							success: (res) => {
+								console.log("发送成功")
+								console.log(u8Arr.buffer)
+								uni.showToast({
+									title: "发送成功",
+									icon: "none"
+								})
+							},
+							fail: () => {
+								console.log("发送失败")
+								uni.showToast({
+									title: "发送失败",
+									icon: "none"
+								})
+							}
+						})
+					}, 100)
+				} else {
+					uni.showToast({
+						title: "请先连接设备",
+						icon: "none"
+					})
+				}
+			},
+			ShowFileModal(e) {
+				this.currentAlarmIndex = Number(e.currentTarget.id)
+				if (this.fileList.length == 0) {
+					this.Download()
+				}
+				this.isShowFileModal = true
+			},
+			hideFileModal() {
+				this.isShowFileModal = false
+				this.currentAlarmIndex = null
+			},
+			FileChange(e) {
+				if (this.alarmShow.isSetTime) {
+					this.alarmsInfo[this.currentAlarmIndex].selectedFile = e.detail.value
+				} else {
+					this.timeAfterInfo.selectedFile = e.detail.value
+				}
+			},
+			UpdateFile() {
+				this.fileList = []
+				this.Download()
 			}
 		},
-		beforeCreate() {
-			console.log("进入定时页面")
-		},
+		beforeCreate() {},
 		created() {
 			_self = this
 			_self.alarmsInfo = getApp().globalData.alarmsInfo
@@ -257,7 +422,8 @@
 			_self.timeAfterInfo = getApp().globalData.timeAfterInfo
 		},
 		mounted() {
-			
+			console.log("定时页面")
+
 		}
 	}
 </script>
