@@ -132,7 +132,13 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; //
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -224,7 +230,10 @@ var _self;var _default =
       remainMin: 0,
       remainHour: 0,
       remainString: '',
-      ready4Play: false };
+      ready4Play: false,
+
+      synthesisText: null,
+      synthesisPath: null };
 
   },
   computed: {
@@ -356,8 +365,7 @@ var _self;var _default =
     },
     // 播放和暂停
     PlayPause: function PlayPause() {var _this = this;
-      if (_self.musicInfo[_self.curMusic] != null)
-      {
+      if (_self.musicInfo[_self.curMusic] != null) {
         //设置播放状态全局flag
         _self.isPlaying = !_self.isPlaying;
         getApp().globalData.isPlaying = _self.isPlaying;
@@ -465,8 +473,7 @@ var _self;var _default =
             // 清空剩余时间
             _self.clearRemain();
             // 如果是单曲模式
-            if (_self.playModeIndex == 0)
-            {
+            if (_self.playModeIndex == 0) {
               _self.isPlaying = false;
               getApp().globalData.isPlaying = false;
               wx.setKeepScreenOn({
@@ -562,18 +569,15 @@ var _self;var _default =
     // 格式化时间显示
     formatTime: function formatTime() {
       _self.remainString = '';
-      if (_self.remainHour < 10)
-      {
+      if (_self.remainHour < 10) {
         _self.remainString += '0';
       }
       _self.remainString += _self.remainHour.toString() + ':';
-      if (_self.remainMin < 10)
-      {
+      if (_self.remainMin < 10) {
         _self.remainString += '0';
       }
       _self.remainString += _self.remainMin.toString() + ':';
-      if (_self.remainSec < 10)
-      {
+      if (_self.remainSec < 10) {
         _self.remainString += '0';
       }
       _self.remainString += _self.remainSec.toString();
@@ -598,10 +602,36 @@ var _self;var _default =
           });
         } });
 
+    },
+    //进入音频合成页面
+    synthesis: function synthesis() {
+      uni.navigateTo({
+        animationType: "slide-in-bottom",
+        url: "/pages/load/synthesis" });
+
+    },
+    addAudio: function addAudio(file) {
+      _self.musicInfo.push({
+        name: file.name,
+        duration: null,
+        path: file.path,
+        isSelect: false,
+        currentTime: 0 });
+
     } },
 
   beforeCreate: function beforeCreate() {
     console.log("进入播放页面");
+  },
+  onShow: function onShow() {
+    if (this.synthesisPath != null && this.synthesisText != null) {
+      this.addAudio({
+        name: this.synthesisText,
+        path: this.synthesisPath });
+
+      this.synthesisText = null;
+      this.synthesisPath = null;
+    }
   },
   created: function created() {
     _self = this;
@@ -614,6 +644,9 @@ var _self;var _default =
     this.primaryServiceUUID = getApp().globalData.primaryServiceUUID;
     this.readUUID = getApp().globalData.readUUID;
     this.writeUUID = getApp().globalData.writeUUID;
+  },
+  activated: function activated() {
+    console.log("activated");
   },
   mounted: function mounted() {var _this2 = this;
     if (this.devices.length != 0) {
@@ -684,6 +717,7 @@ var _self;var _default =
       this.ready4Play = true;
     }
   } };exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
 /***/ }),
 

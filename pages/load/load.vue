@@ -10,10 +10,11 @@
 				<button v-if="!isMultiSelect && musicInfo.length != 0" @click="MultiSelectStart" class="cu-btn round lines-black"><text>多选</text></button>
 				<button v-if="isMultiSelect && !isSelectedAll" @click="SelectAll" class="cu-btn round lines-black margin-right-sm"><text>全选</text></button>
 				<button v-if="isMultiSelect && isSelectedAll" @click="SelectNothing" class="cu-btn round lines-black margin-right-sm"><text>取消全选</text></button>
-				<button v-if="isMultiSelect"@click="MultiSelectCancel" class="cu-btn round lines-red"><text>取消</text></button>
+				<button v-if="isMultiSelect" @click="MultiSelectCancel" class="cu-btn round lines-red"><text>取消</text></button>
 			</view>
 			<view class="content text-bold"></view>
 			<view class="action">
+				<button class="cu-btn round lines-black margin-right-sm" @click="synthesis"><text>合成</text></button>
 				<button v-if="!isMultiSelect" class="cu-btn round lines-black" @click="importMusic"><text>导入</text></button>
 				<button v-else class="cu-btn round lines-red" @click="deleteMusic"><text>删除</text></button>
 			</view>
@@ -21,9 +22,11 @@
 		<!-- 音乐列表 -->
 		<view class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
 			<view class="cu-list menu-avatar shadow shadow-blur">
-				<view class="cu-item" :class="!isMultiSelect && index==curMusic?'bg-image-grey':''"v-for="(item, index) in musicInfo" :key="index" @click="MusicSelect" :id="index">
+				<view class="cu-item" :class="!isMultiSelect && index==curMusic?'bg-image-grey':''" v-for="(item, index) in musicInfo"
+				 :key="index" @click="MusicSelect" :id="index">
 					<view v-if="!isMultiSelect" class="cu-avatar round lg bg-white"><text :class="index == curMusic && isPlaying?'cuIconfont-spin':''">{{index + 1}}</text></view>
-					<view v-else class="cu-avatar round lg solids" :class="item.isSelect?'bg-blue':'bg-white'"><text v-if="item.isSelect" class="cuIcon text-white cuIcon-check"></text></view>
+					<view v-else class="cu-avatar round lg solids" :class="item.isSelect?'bg-blue':'bg-white'"><text v-if="item.isSelect"
+						 class="cuIcon text-white cuIcon-check"></text></view>
 					<view class="content">
 						<view :class="!isMultiSelect && index==curMusic?'text-black':'text-gray'">{{item.name.length>12?item.name.substr(0,12) + '...':item.name}}</view>
 					</view>
@@ -45,15 +48,18 @@
 		<view class="bottomBox" style="height: 160rpx; bottom: 100rpx;">
 			<view class="flex justify-center align-center">
 				<view class="flex-sub flex justify-center padding align-center">
-					<button class="cu-btn cuIcon lines-black round margin-right-sm shadow shadow-blur" @click="ChangePlayMode"><text class="text-black text-shadow" :class="playMode[playModeIndex]"></text></button>
+					<button class="cu-btn cuIcon lines-black round margin-right-sm shadow shadow-blur" @click="ChangePlayMode"><text
+						 class="text-black text-shadow" :class="playMode[playModeIndex]"></text></button>
 				</view>
 				<view class="flex-treble flex justify-center padding align-center">
 					<!-- <button class="cu-btn cuIcon lines-black round mid margin-left-sm shadow shadow-blur" :disabled="playDisabled" @click="LastMusic"><text class="cuIcon-backwardfill text-black text-shadow"></text></button> -->
-					<button class="cu-btn cuIcon lines-black round lg margin-left-sm margin-right-sm shadow" :disabled="playDisabled" @click="PlayPause"><text class="text-red text-shadow text-sm">{{isPlaying?"停止":"更换"}}</text></button>
+					<button class="cu-btn cuIcon lines-black round lg margin-left-sm margin-right-sm shadow" :disabled="playDisabled"
+					 @click="PlayPause"><text class="text-red text-shadow text-sm">{{isPlaying?"停止":"更换"}}</text></button>
 					<!-- <button class="cu-btn cuIcon lines-black round mid margin-right-sm shadow shadow-blur" :disabled="playDisabled" @click="NextMusic"><text class="cuIcon-play_forward_fill text-black text-shadow"></text></button> -->
 				</view>
 				<view class="flex-sub flex justify-center padding align-center">
-					<button class="cu-btn cuIcon lines-black round margin-left-sm shadow shadow-blur" :disabled="playDisabled&&ready4Play" @click="ShowVolume"><text class="cuIcon-notification text-black text-shadow"></text></button>
+					<button class="cu-btn cuIcon lines-black round margin-left-sm shadow shadow-blur" :disabled="playDisabled&&ready4Play"
+					 @click="ShowVolume"><text class="cuIcon-notification text-black text-shadow"></text></button>
 				</view>
 			</view>
 		</view>
@@ -85,17 +91,20 @@
 				playModeIndex: 0,
 				playMode: ['cuIcon-musicfill', 'cuIcon-refresh', 'cuIcon-order'],
 				isPlaying: false,
-				remain:0,
-				remainSec:0,
-				remainMin:0,
-				remainHour:0,
+				remain: 0,
+				remainSec: 0,
+				remainMin: 0,
+				remainHour: 0,
 				remainString: '',
-				ready4Play: false
+				ready4Play: false,
+				
+				synthesisText: null,
+				synthesisPath: null
 			}
 		},
 		computed: {
 			playDisabled: () => {
-				return _self.musicInfo.length==0?true:false
+				return _self.musicInfo.length == 0 ? true : false
 			}
 		},
 		methods: {
@@ -114,38 +123,38 @@
 				_self.isShowVolume = false
 			},
 			// 进入多选页面
-			MultiSelectStart(){
+			MultiSelectStart() {
 				_self.isMultiSelect = true
 			},
 			// 全选
-			SelectAll(){
+			SelectAll() {
 				_self.musicInfo.forEach((music, index) => {
 					music.isSelect = true
 				})
 				_self.isSelectedAll = true
 			},
 			// 全不选
-			SelectNothing(){
+			SelectNothing() {
 				_self.musicInfo.forEach((music, index) => {
 					music.isSelect = false
 				})
 				_self.isSelectedAll = false
 			},
 			// 取消并退出全选页面
-			MultiSelectCancel(){
+			MultiSelectCancel() {
 				_self.isMultiSelect = false
 				_self.SelectNothing()
 			},
 			// 删除页面
-			deleteMusic(){
+			deleteMusic() {
 				let index = 0
-				for(;;){
-					if (_self.musicInfo[index].isSelect){
+				for (;;) {
+					if (_self.musicInfo[index].isSelect) {
 						_self.musicInfo.splice(index, 1)
 					} else {
 						index++
 					}
-					if (_self.musicInfo[index] == null){
+					if (_self.musicInfo[index] == null) {
 						break
 					}
 				}
@@ -154,8 +163,8 @@
 				}
 			},
 			// 点击音乐列表时选择音乐
-			MusicSelect(e){
-				if (_self.isMultiSelect){
+			MusicSelect(e) {
+				if (_self.isMultiSelect) {
 					_self.musicInfo[e.currentTarget.id].isSelect = !_self.musicInfo[e.currentTarget.id].isSelect
 				} else {
 					_self.curMusic = e.currentTarget.id
@@ -163,11 +172,11 @@
 					if (_self.isPlaying) {
 						_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
 					}
-					_self.clearRemain()	
+					_self.clearRemain()
 				}
 			},
 			// 上一首音乐
-			LastMusic(){
+			LastMusic() {
 				let musicCnt = _self.musicInfo.length
 				_self.curMusic--
 				getApp().globalData.curMusic--
@@ -195,35 +204,34 @@
 				}
 			},
 			// 改变播放模式
-			ChangePlayMode(){
+			ChangePlayMode() {
 				_self.playModeIndex++
-				if (_self.playModeIndex >= 3){
+				if (_self.playModeIndex >= 3) {
 					_self.playModeIndex = 0
 				}
-				switch (_self.playModeIndex){
-				case 0 :
-					wx.showToast({
-						title: '单次播放模式',
-						icon: "none"
-					})
-					break
-				case 1 :
-					wx.showToast({
-						title: '单曲循环模式',
-						icon: "none"
-					})
-					break
-				case 2:
-					wx.showToast({
-						title: '全部循环模式',
-						icon: "none"
-					})
+				switch (_self.playModeIndex) {
+					case 0:
+						wx.showToast({
+							title: '单次播放模式',
+							icon: "none"
+						})
+						break
+					case 1:
+						wx.showToast({
+							title: '单曲循环模式',
+							icon: "none"
+						})
+						break
+					case 2:
+						wx.showToast({
+							title: '全部循环模式',
+							icon: "none"
+						})
 				}
 			},
 			// 播放和暂停
-			PlayPause(){
-				if (_self.musicInfo[_self.curMusic] != null)
-				{
+			PlayPause() {
+				if (_self.musicInfo[_self.curMusic] != null) {
 					//设置播放状态全局flag
 					_self.isPlaying = !_self.isPlaying
 					getApp().globalData.isPlaying = _self.isPlaying
@@ -331,8 +339,7 @@
 							// 清空剩余时间
 							_self.clearRemain()
 							// 如果是单曲模式
-							if (_self.playModeIndex == 0)
-							{
+							if (_self.playModeIndex == 0) {
 								_self.isPlaying = false
 								getApp().globalData.isPlaying = false
 								wx.setKeepScreenOn({
@@ -359,11 +366,11 @@
 										}
 									})
 								}, 1000)
-							} 
+							}
 							// 如果是单曲循环模式
 							else if (_self.playModeIndex == 1) {
 								_self.innerAudioContext.play()
-							} 
+							}
 							// 如果是列表循环模式
 							else {
 								_self.curMusic++
@@ -372,7 +379,7 @@
 								}
 								_self.innerAudioContext.src = _self.musicInfo[_self.curMusic].path
 								_self.innerAudioContext.play()
-								
+
 							}
 						})
 						// 更新剩余播放时长
@@ -410,15 +417,15 @@
 				}
 			},
 			// 计算歌曲的剩余播放时间
-			culculateRemain(){
+			culculateRemain() {
 				_self.remain = parseInt(_self.innerAudioContext.duration - _self.innerAudioContext.currentTime)
 				_self.remainSec = _self.remain % 60
-				_self.remainMin = parseInt(_self.remain/60)
-				_self.remainHour = parseInt(_self.remain/3600)
+				_self.remainMin = parseInt(_self.remain / 60)
+				_self.remainHour = parseInt(_self.remain / 3600)
 				_self.formatTime()
 			},
 			// 清除歌曲的剩余播放时间
-			clearRemain(){
+			clearRemain() {
 				_self.remain = 0
 				_self.remainSec = 0
 				_self.remainMin = 0
@@ -428,24 +435,21 @@
 			// 格式化时间显示
 			formatTime() {
 				_self.remainString = ''
-				if (_self.remainHour < 10)
-				{
+				if (_self.remainHour < 10) {
 					_self.remainString += '0'
 				}
 				_self.remainString += _self.remainHour.toString() + ':'
-				if (_self.remainMin < 10)
-				{
+				if (_self.remainMin < 10) {
 					_self.remainString += '0'
 				}
 				_self.remainString += _self.remainMin.toString() + ':'
-				if (_self.remainSec < 10)
-				{
+				if (_self.remainSec < 10) {
 					_self.remainString += '0'
 				}
 				_self.remainString += _self.remainSec.toString()
 			},
 			// 导入微信聊天中的音乐文件
-			importMusic(){
+			importMusic() {
 				wx.chooseMessageFile({
 					//最大选择的文件数量
 					count: 10,
@@ -464,10 +468,36 @@
 						})
 					}
 				})
+			},
+			//进入音频合成页面
+			synthesis() {
+				uni.navigateTo({
+					animationType: "slide-in-bottom",
+					url: "/pages/load/synthesis"
+				})
+			},
+			addAudio(file) {
+				_self.musicInfo.push({
+					name: file.name,
+					duration: null,
+					path: file.path,
+					isSelect: false,
+					currentTime: 0
+				})
 			}
 		},
 		beforeCreate() {
 			console.log("进入播放页面")
+		},
+		onShow() {
+			if (this.synthesisPath != null && this.synthesisText != null) {
+				this.addAudio({
+					name: this.synthesisText,
+					path: this.synthesisPath
+				})
+				this.synthesisText = null
+				this.synthesisPath = null
+			}
 		},
 		created() {
 			_self = this
@@ -480,6 +510,9 @@
 			this.primaryServiceUUID = getApp().globalData.primaryServiceUUID
 			this.readUUID = getApp().globalData.readUUID
 			this.writeUUID = getApp().globalData.writeUUID
+		},
+		activated() {
+			console.log("activated")
 		},
 		mounted() {
 			if (this.devices.length != 0) {
@@ -562,6 +595,7 @@
 		left: 0;
 		right: 0;
 	}
+
 	.floatBtn {
 		position: fixed;
 		margin: auto;

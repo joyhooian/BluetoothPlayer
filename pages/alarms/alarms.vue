@@ -194,7 +194,7 @@
 							if (alarm.isUsing) {
 								let numArr = new Array()
 								numArr.push(0x7E)
-								numArr.push(0x09 + alarm.weekdays.length)
+								numArr.push(0x0A + alarm.weekdays.length)
 								numArr.push(0x13)
 								numArr.push(index + 1)
 								numArr.push(Number(alarm.startTime.substr(0, 2)))
@@ -203,10 +203,10 @@
 								numArr.push(Number(alarm.stopTime.substr(3, 2)))
 								numArr.push(alarm.volume)
 								numArr.push(alarm.relayStatus ? 0x01 : 0x00)
-								numArr.push(alarm.selectedFile?alarm.selectedFile:0)
 								alarm.weekdays.forEach((weekday) => {
 									numArr.push(weekday + 1)
 								})
+								numArr.push(alarm.selectedFile?alarm.selectedFile:0)
 								numArr.push(0xEF)
 								let u8Arr = new Uint8Array(numArr)
 								alarmsMessage.push(u8Arr.buffer)
@@ -273,7 +273,7 @@
 						let numArr = new Array()
 						// 时间间隔分包发送指令
 						numArr.push(0x7E)
-						numArr.push(0x06)
+						numArr.push(0x07)
 						numArr.push(0x18)
 						numArr.push((this.timeAfterInfo.secAfter & 0xFF00) >> 8)
 						numArr.push(this.timeAfterInfo.secAfter & 0x00FF)
@@ -340,16 +340,17 @@
 											icon: "none"
 										})
 									}
-								} else {
-									uni.showToast({
-										title: "文件读取失败",
-										icon: "none"
-									})
-									return
-									break;
 								}
 							}
 						}
+						setTimeout(() => {
+							if (this.fileList.length == 0) {
+								uni.showToast({
+									title: "没有读取到文件",
+									icon: "none"
+								})
+							}
+						}, 500)
 					})
 					setTimeout(() => {
 						let numArr = new Array()

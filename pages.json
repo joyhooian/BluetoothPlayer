@@ -49,6 +49,15 @@
             }
             
         }
+        ,{
+            "path" : "pages/load/synthesis",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"globalStyle": {
 		"navigationBarBackgroundColor": "#0081ff",

@@ -207,6 +207,7 @@ var _default =
         this.timeAfterInfo.volume = this.volume;
         this.timeAfterInfo.relayStatus = this.relayStatus;
         this.timeAfterInfo.secAfter = this.secAfter;
+        this.timeAfterInfo.selectedFile = 0;
         getApp().globalData.alarmShow.isTimeAfter = true;
         getApp().globalData.alarmShow.isSetTime = false;
         console.log(this.volume);

@@ -269,6 +269,7 @@ var _default =
               relayStatus: this.relayStatus,
               startTime: this.startTime,
               stopTime: this.stopTime,
+              selectedFile: 0,
               isUsing: false });
 
           }
@@ -283,6 +284,7 @@ var _default =
                       relayStatus: _this.relayStatus,
                       startTime: _this.startTime,
                       stopTime: _this.stopTime,
+                      selectedFile: 0,
                       isUsing: false });
 
                     throw new Error("结束比较");
@@ -294,6 +296,7 @@ var _default =
                       relayStatus: _this.relayStatus,
                       startTime: _this.startTime,
                       stopTime: _this.stopTime,
+                      selectedFile: 0,
                       isUsing: false });
 
                     throw new Error("结束比较");
@@ -327,6 +330,7 @@ var _default =
                     relayStatus: _this.relayStatus,
                     startTime: _this.startTime,
                     stopTime: _this.stopTime,
+                    selectedFile: 0,
                     isUsing: false });
 
                   throw new Error("结束比较");
@@ -338,6 +342,7 @@ var _default =
                     relayStatus: _this.relayStatus,
                     startTime: _this.startTime,
                     stopTime: _this.stopTime,
+                    selectedFile: 0,
                     isUsing: false });
 
                   throw new Error("结束比较");

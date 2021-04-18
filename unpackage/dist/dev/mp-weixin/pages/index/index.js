@@ -171,13 +171,29 @@ var _default =
 {
   data: function data() {
     return {
-      PageCur: 'links' };
+      PageCur: 'links',
+      synthesisPath: null,
+      synthesisName: null };
 
   },
   methods: {
     NavChange: function NavChange(e) {
       this.PageCur = e.currentTarget.dataset.cur;
-    } } };exports.default = _default;
+    } },
+
+  onShow: function onShow() {
+    console.log("进入index");
+    if (this.PageCur === 'load') {
+      if (this.synthesisName != null && this.synthesisPath != null) {
+        this.$refs.load.addAudio({
+          name: this.synthesisName,
+          path: this.synthesisPath });
+
+      }
+      this.synthesisName = null;
+      this.synthesisPath = null;
+    }
+  } };exports.default = _default;
 
 /***/ })
 

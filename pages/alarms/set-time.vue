@@ -139,6 +139,7 @@
 								relayStatus: this.relayStatus,
 								startTime: this.startTime,
 								stopTime: this.stopTime,
+								selectedFile: 0,
 								isUsing: false
 							})
 						} 
@@ -153,6 +154,7 @@
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
+											selectedFile: 0,
 											isUsing: false,
 										})
 										throw new Error("结束比较")
@@ -164,6 +166,7 @@
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
+											selectedFile: 0,
 											isUsing: false
 										})
 										throw new Error("结束比较")
@@ -197,7 +200,8 @@
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
-											isUsing: false,
+											selectedFile: 0,
+											isUsing: false
 										})
 										throw new Error("结束比较")
 									} 
@@ -208,6 +212,7 @@
 											relayStatus: this.relayStatus,
 											startTime: this.startTime,
 											stopTime: this.stopTime,
+											selectedFile: 0,
 											isUsing: false
 										})
 										throw new Error("结束比较")

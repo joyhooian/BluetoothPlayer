@@ -3,7 +3,7 @@
 	<view>
 		<links v-if="PageCur=='links'"></links>
 		<alarms v-if="PageCur=='alarms'"></alarms>
-		<load v-if="PageCur=='load'"></load>
+		<load ref="load" v-if="PageCur=='load'"></load>
 		<setting v-if="PageCur=='setting'"></setting>
 		<!-- <basics v-if="PageCur=='basics'"></basics> -->
 		<components v-if="PageCur=='component'"></components>
@@ -41,12 +41,27 @@
 	export default {
 		data() {
 			return {
-				PageCur: 'links'
+				PageCur: 'links',
+				synthesisPath: null,
+				synthesisName: null
 			}
 		},
 		methods: {
 			NavChange: function(e) {
 				this.PageCur = e.currentTarget.dataset.cur
+			}
+		},
+		onShow() {
+			console.log("进入index")
+			if (this.PageCur === 'load') {
+				if (this.synthesisName != null && this.synthesisPath != null) {
+					this.$refs.load.addAudio({
+						name: this.synthesisName,
+						path: this.synthesisPath
+					})
+				}
+				this.synthesisName = null
+				this.synthesisPath = null
 			}
 		}
 	}
