@@ -32,26 +32,23 @@
 		<!-- 上部操作栏 -->
 		<view class="cu-bar">
 			<view class="cu-list grid col-5">
-				<view class="cu-item" @click="Delete">
-					<text>删除</text>
+				<view class="cu-item" @click="Reset">
+					<text>恢复出厂</text>
 				</view>
 				<view class="cu-item" @click="ShutdownBoot">
 					<text>开关机</text>
 				</view>
-				<view class="cu-item" @click="TimingCancel">
+				<view class="cu-item light" @click="TimingCancel" :class="mode===1?'bg-red':''">
 					<text>定时</text>
 				</view>
-				<view class="cu-item" @click="PlayWhenBoot">
+				<view class="cu-item light" @click="PlayWhenBoot" :class="mode===2?'bg-red':''">
 					<text>上电播放</text>
 				</view>
-				<view class="cu-item" @click="LightMode">
-					<text>灯模式</text>
+				<view class="cu-item light" @click="Mute" :class="mode===3?'bg-red':''">
+					<text>到点循环</text>
 				</view>
-				<view class="cu-item" @click="All">
-					<text>循环</text>
-				</view>
-				<view class="cu-item" @click="Single">
-					<text>单曲</text>
+				<view class="cu-item" @click="Delete">
+					<text>删除</text>
 				</view>
 				<view class="cu-item" @click="Last">
 					<text>上一曲</text>
@@ -62,8 +59,8 @@
 				<view class="cu-item" @click="Stop">
 					<text>停止</text>
 				</view>
-				<view class="cu-item" @click="Mute">
-					<text>到点循环</text>
+				<view class="cu-item" @click="LightMode">
+					<text>灯模式</text>
 				</view>
 				<view class="cu-item" @click="VolumeIncrease">
 					<text>音量加</text>
@@ -163,7 +160,8 @@
 				isSingle: false,
 				isAll: false,
 				isPlayWhenBoot: false,
-				isTimingCancel: false
+				isTimingCancel: false,
+				mode: getApp().globalData.mode
 			}
 		},
 		methods: {
@@ -354,8 +352,8 @@
 							success: (res) => {
 								console.log("发送数据成功")
 								console.log(u8Arr.buffer)
-								this.isMuted = false
-								getApp().globalData.isMuted = this.isMuted
+								this.mode = 3
+								getApp().globalData.mode = 3
 								uni.showToast({
 									title: "到点循环成功",
 									icon: "none"
@@ -408,51 +406,8 @@
 					}
 				}
 			},
-			//下发单曲指令
-			Single() {
-				console.log("单曲")
-				uni.showToast({
-					title: '单曲',
-					icon: 'loading',
-					duration: 1000,
-					mask: true
-				})
-				if (this.devices.length) {
-					let numArr = new Array()
-					numArr.push(0x7E)
-					numArr.push(0x02)
-					numArr.push(0x21)
-					numArr.push(0xEF)
-					let u8Arr = new Uint8Array(numArr)
-					wx.writeBLECharacteristicValue({
-						deviceId: this.devices[0].deviceId,
-						serviceId: this.primaryServiceUUID,
-						characteristicId: this.writeUUID,
-						value: u8Arr.buffer,
-						success: (res) => {
-							console.log("发送数据成功")
-							console.log(u8Arr.buffer)
-							uni.showToast({
-								title: "设置单曲播放成功",
-								icon: "none"
-							})
-							this.isSingle = true
-							this.isAll = false
-							getApp().globalData.isSingle = this.isSingle
-							getApp().globalData.isAll = this.isAll
-						},
-						fail: (res) => {
-							console.log("发送数据失败")
-							uni.showToast({
-								title: "设置单曲播放失败",
-								icon: "none"
-							})
-						}
-					})
-				}
-			},
 			//下发循环指令
-			All() {
+			Reset() {
 				uni.showToast({
 					title: '循环...',
 					icon: 'loading',
@@ -609,8 +564,8 @@
 						success: (res) => {
 							console.log("上电播放发送成功")
 							console.log(u8Arr.buffer)
-							this.isPlayWhenBoot = true
-							getApp().globalData.isPlayWhenBoot = this.isPlayWhenBoot
+							this.mode = 2
+							getApp().globalData.mode = 2
 							uni.showToast({
 								title: "上电播放发送成功",
 								icon: 'none'
@@ -689,8 +644,8 @@
 						success: (res) => {
 							console.log("定时成功")
 							console.log(u8Arr.buffer)
-							this.isTimingCancel = true
-							getApp().globalData.isTimingCancel = true
+							getApp().globalData.mode = 1
+							this.mode = 1
 							uni.showToast({
 								title: "定时成功",
 								icon: 'none'

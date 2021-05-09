@@ -25,7 +25,8 @@
 			alarmShow: {
 				isSetTime: false,
 				isTimeAfter: false
-			}
+			},
+			mode: null
 		},
 		onLaunch: function() {
 			wx.setKeepScreenOn({
