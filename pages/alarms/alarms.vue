@@ -14,7 +14,7 @@
 			</view>
 		</view>
 		<!-- 如果是时间设定则显示 -->
-		<view v-if="alarmShow.isSetTime" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
+		<view v-if="alarmShow.isSetTime" class="box" style="margin-bottom: 320rpx; margin-top: 120rpx;">
 			<view class="cu-list menu card-menu margin-top sm-border" v-for="(item, index) in alarmsInfo" :key="index">
 				<view class="cu-item">
 					<view class="content">{{"编号 " + (index + 1)}}</view>
@@ -53,6 +53,7 @@
 					</view>
 				</view>
 			</view>
+			<view style="padding-bottom: 320rpx;"></view>
 		</view>
 		<!-- 如果是间隔播放则显示 -->
 		<view v-if="alarmShow.isTimeAfter" class="box" style="margin-bottom: 260rpx; margin-top: 120rpx;">
