@@ -129,7 +129,7 @@
 				</view>
 			</view>
 		</view>
-		
+
 		<!-- 底部操作按钮 -->
 		<view class="bottomBox">
 			<view class="flex justify-center">
@@ -334,76 +334,48 @@
 					duration: 1000,
 					mask: true
 				})
-				if (this.isMuted) {
-					console.log("取消到点循环")
-					if (this.devices.length) {
-						let numArr = new Array()
-						numArr.push(0x7E)
-						numArr.push(0x03)
-						numArr.push(0x15)
-						numArr.push(0x00)
-						numArr.push(0xEF)
-						let u8Arr = new Uint8Array(numArr)
-						wx.writeBLECharacteristicValue({
-							deviceId: this.devices[0].deviceId,
-							serviceId: this.primaryServiceUUID,
-							characteristicId: this.writeUUID,
-							value: u8Arr.buffer,
-							success: (res) => {
-								console.log("发送数据成功")
-								console.log(u8Arr.buffer)
+				console.log("到点循环")
+				if (this.devices.length) {
+					let numArr = new Array()
+					numArr.push(0x7E)
+					numArr.push(0x03)
+					numArr.push(0x15)
+					numArr.push(0x00)
+					numArr.push(0xEF)
+					let u8Arr = new Uint8Array(numArr)
+					wx.writeBLECharacteristicValue({
+						deviceId: this.devices[0].deviceId,
+						serviceId: this.primaryServiceUUID,
+						characteristicId: this.writeUUID,
+						value: u8Arr.buffer,
+						success: (res) => {
+							console.log(u8Arr.buffer)
+							if (this.mode == 3) {
+								console.log("取消到点循环成功")
+								this.mode = 0
+								getApp().globalData.mode = 0
+								uni.showToast({
+									title: "取消到点循环成功",
+									icon: "none"
+								})
+							} else {
+								console.log("到点循环成功")
 								this.mode = 3
 								getApp().globalData.mode = 3
 								uni.showToast({
 									title: "到点循环成功",
 									icon: "none"
 								})
-							},
-							fail: (res) => {
-								console.log("发送数据失败")
-								uni.showToast({
-									title: "到点循环失败",
-									icon: "none"
-								})
 							}
-						})
-					}
-				} else { //下发到点循环指令
-					console.log("到点循环")
-					if (this.devices.length) {
-						let numArr = new Array()
-						numArr.push(0x7E)
-						numArr.push(0x03)
-						numArr.push(0x15)
-						numArr.push(0x01)
-						numArr.push(0xEF)
-						let u8Arr = new Uint8Array(numArr)
-						wx.writeBLECharacteristicValue({
-							deviceId: this.devices[0].deviceId,
-							serviceId: this.primaryServiceUUID,
-							characteristicId: this.writeUUID,
-							value: u8Arr.buffer,
-							success: (res) => {
-								console.log("发送数据成功")
-								console.log(u8Arr.buffer)
-								this.isMuted = true
-								getApp().globalData.isMuted = this.isMuted
-								uni.showToast({
-									title: "到点循环成功",
-									icon: "none"
-								})
-								this.isMuted = true
-								getApp().globalData.isMuted = this.isMuted
-							},
-							fail: (res) => {
-								console.log("发送数据失败")
-								uni.showToast({
-									title: "到点循环失败",
-									icon: "none"
-								})
-							}
-						})
-					}
+						},
+						fail: (res) => {
+							console.log("到点循环成功")
+							uni.showToast({
+								title: "到点循环失败",
+								icon: "none"
+							})
+						}
+					})
 				}
 			},
 			//下发循环指令
@@ -562,14 +534,24 @@
 						characteristicId: this.writeUUID,
 						value: u8Arr.buffer,
 						success: (res) => {
-							console.log("上电播放发送成功")
 							console.log(u8Arr.buffer)
-							this.mode = 2
-							getApp().globalData.mode = 2
-							uni.showToast({
-								title: "上电播放发送成功",
-								icon: 'none'
-							})
+							if (this.mode == 2) {
+								console.log("取消上电播放成功")
+								this.mode = 0
+								getApp().globalData.mode = 0
+								uni.showToast({
+									title: "取消上电播放成功",
+									icon: 'none'
+								})
+							} else {
+								console.log("上电播放成功")
+								this.mode = 2
+								getApp().globalData.mode = 2
+								uni.showToast({
+									title: "上电播放成功",
+									icon: 'none'
+								})
+							}
 						},
 						fail: (res) => {
 							console.log("上电播放发送失败")
@@ -642,14 +624,24 @@
 						characteristicId: this.writeUUID,
 						value: u8Arr.buffer,
 						success: (res) => {
-							console.log("定时成功")
 							console.log(u8Arr.buffer)
-							getApp().globalData.mode = 1
-							this.mode = 1
-							uni.showToast({
-								title: "定时成功",
-								icon: 'none'
-							})
+							if (this.mode == 1) {
+								console.log("取消定时成功")
+								this.mode = 0
+								getApp().globalData.mode = 0
+								uni.showToast({
+									title: "取消定时成功",
+									icon: 'none'
+								})
+							} else {
+								console.log("定时成功")
+								this.mode = 1
+								getApp().globalData.mode = 1
+								uni.showToast({
+									title: "定时成功",
+									icon: 'none'
+								})
+							}
 						},
 						fail: (res) => {
 							console.log("定时失败")

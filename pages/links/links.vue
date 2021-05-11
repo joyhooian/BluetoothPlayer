@@ -40,7 +40,9 @@
 				readUUID: '', //通知UUID
 				writeUUID: '', //写入UUID
 				searchingLoading: false,
-				devices: []
+				devices: [],
+				isLoadingShow: false,
+				isSyncing: false
 			};
 		},
 		methods: {
@@ -74,6 +76,9 @@
 							})
 							return
 						}
+						if (res.discovering) {
+							return
+						}
 						
 						//注册断开链接回调
 						wx.onBLEConnectionStateChange((res) => {
@@ -87,6 +92,19 @@
 						})
 						
 						_self.searchingLoading = true
+						wx.showLoading({
+							title: '请稍后...',
+							mask: true
+						})
+						_self.isLoadingShow = true
+						console.log("Loading 已开启")
+						setTimeout(() => {
+							if (_self.isLoadingShow) {
+								console.log("Loading 已关闭")
+								_self.isLoadingShow = false
+								wx.hideLoading()
+							}
+						}, 1000 * 5)
 						//打开[蓝牙发现]
 						wx.startBluetoothDevicesDiscovery({
 							success: (res) => {
@@ -103,11 +121,25 @@
 													wx.createBLEConnection({
 														deviceId: item.deviceId,
 														success: (res) => {
+															_self.isLoadingShow = false
 															console.log("设备" + item.name + "已连接")
 															wx.showToast({
 																title: '设备' + item.name + '已连接',
 																icon: 'none'
 															})
+															wx.showLoading({
+																title: '同步数据中...',
+																mask: true
+															})
+															console.log("同步数据Loading")
+															_self.isSyncing = true
+															setTimeout(() => {
+																if (_self.isSyncing) {
+																	wx.hideLoading()
+																	_self.isSyncing = false
+																	console.log("同步数据Loading关闭")
+																}
+															}, 8000)
 															//保证重复连接时只出现一个设备
 															_self.devices.splice(0, _self.devices.length)
 															_self.devices.push({
@@ -155,22 +187,31 @@
 																			console.log("收到监听数据")
 																			console.log(u8Arr)
 																			let offset = u8Arr.indexOf(0x7E)
-																			if (u8Arr[offset + 1] === 0x05 && u8Arr[offset + 2] === 0x99) {
+																			if (u8Arr[offset + 1] == 0x05 && u8Arr[offset + 2] == 0x99) {
+																				console.log("收到模式指令")
 																				let isTiming = u8Arr[offset + 3]
 																				let isPlayingOncePower = u8Arr[offset + 4]
 																				let isCycleAtTime = u8Arr[offset + 5]
-																				if (isTiming === 0x00) {
+																				console.log("isTiming: " + isTiming)
+																				console.log("isPlayingOncePower: " + isPlayingOncePower)
+																				console.log("isCycleAtTime: " + isCycleAtTime)
+																				if (isTiming == 0x00) {
 																					getApp().globalData.mode = 1
 																				}
-																				else if (isPlayingOncePower === 0x01) {
+																				else if (isPlayingOncePower == 0x01) {
 																					getApp().globalData.mode = 2
 																				}
-																				else if (isCycleAtTime === 0x01) {
+																				else if (isCycleAtTime == 0x01) {
 																					getApp().globalData.mode = 3
+																				}
+																				_self.$forceUpdate()
+																				if (_self.isSyncing) {
+																					_self.isSyncing = false
+																					wx.hideLoading()
+																					console.log("同步数据Loading关闭")
 																				}
 																			}
 																			wx.offBLECharacteristicValueChange()
-																			
 																		})
 																		//写特征值操作
 																		setTimeout(() => {
@@ -185,6 +226,11 @@
 																				},
 																				fail: (res) => {
 																					console.log("发送失败 " + res.errMsg)
+																					if (_self.isSyncing) {
+																						_self.isSyncing = false
+																						wx.hideLoading()
+																						console.log("同步数据Loading关闭")
+																					}
 																				}
 																			})
 																		}, 100)
@@ -201,6 +247,9 @@
 																icon: 'none'
 															})
 															console.log("连接失败")
+															if (_self.isConnected) {
+																return
+															}
 															wx.closeBluetoothAdapter({
 																success: res => {
 																	console.log("关闭蓝牙适配器成功")

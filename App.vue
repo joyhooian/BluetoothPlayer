@@ -26,7 +26,7 @@
 				isSetTime: false,
 				isTimeAfter: false
 			},
-			mode: null
+			mode: 0
 		},
 		onLaunch: function() {
 			wx.setKeepScreenOn({

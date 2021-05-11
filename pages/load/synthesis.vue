@@ -49,7 +49,7 @@
 				}
 				uni.showLoading()
 				wx.downloadFile({
-					url: "http://bt.shadowsspacer.top:5000/api/TextToSpeech/" + this.text,
+					url: "https://tts.jhy2015.cn/api/BluetoothPlayerTTS/TTS/" + this.text,
 					success: (res) => {
 						console.log(res)
 						uni.showToast({
