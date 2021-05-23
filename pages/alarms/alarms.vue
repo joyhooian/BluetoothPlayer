@@ -250,6 +250,10 @@
 									success: (res) => {
 										console.log("发送成功")
 										console.log(u8Arr.buffer)
+										uni.showToast({
+											title: "设置成功！",
+											icon: "success"
+										})
 									},
 									fail: (res) => {
 										console.log('发送失败')
