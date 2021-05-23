@@ -426,6 +426,8 @@
 							getApp().globalData.mode = 2
 						} else if (isCycleAtTime == 0x01) {
 							getApp().globalData.mode = 3
+						} else {
+							getApp().globalData.mode = 0
 						}
 						this.mode = getApp().globalData.mode
 						this.$forceUpdate()
@@ -534,7 +536,7 @@
 			},
 			//试听方法
 			Play(e) {
-				console("试听")
+				console.log("试听")
 				if (this.devices.length == 0) {
 					uni.showToast({
 						title: "设备未连接",
