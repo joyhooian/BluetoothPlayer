@@ -10,7 +10,7 @@
 					<text class="text-black">星期</text>
 				</view>
 				<view class="action">
-					<view v-for="(item, index) in weekDays" :key="index" :id="index" class="cu-tag round light margin-right-xs" :class="item.selected?'bg-red':'bg-grey'" @click="SelectWeekday">{{item.name}}</view>
+					<view v-for="(item, index) in weekDays" :key="index" :id="index" class="cu-tag round light margin-right-sm" :class="item.selected?'bg-red':'bg-grey'" @click="SelectWeekday">{{item.name}}</view>
 				</view>
 			</view>
 			<view class="cu-item">
@@ -33,7 +33,7 @@
 				<view class="content">开始时间</view>
 				<view class="action">
 					<picker mode="time" start="00:00" end="23:59" :value="startTime" @change="ChangeStartTime">
-						<view class="picker">
+						<view class="picker text-xl">
 							{{startTime}}
 						</view>
 					</picker>
@@ -43,7 +43,7 @@
 				<view class="content">结束时间</view>
 				<view class="action">
 					<picker mode="time" start="00:00" end="23:59" :value="stopTime" @change="ChangeStopTime">
-						<view class="picker">
+						<view class="picker text-xl">
 							{{stopTime}}
 						</view>
 					</picker>

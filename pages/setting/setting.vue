@@ -102,8 +102,8 @@
 					<view class="action">
 						<view class="flex padding align-center">
 							<button class="cu-btn sm round bg-red margin-right-sm" :id="index" @click="Play">试听</button>
-							<radio :id="index" class="checked" :checked="(isSelected - 1)==index?true:false"
-								@click="Select"></radio>
+							<!-- <radio :id="index" class="checked" :checked="(isSelected - 1)==index?true:false"
+								@click="Select"></radio> -->
 						</view>
 					</view>
 				</view>
