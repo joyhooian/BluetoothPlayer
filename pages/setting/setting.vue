@@ -102,8 +102,6 @@
 					<view class="action">
 						<view class="flex padding align-center">
 							<button class="cu-btn sm round bg-red margin-right-sm" :id="index" @click="Play">试听</button>
-							<!-- <radio :id="index" class="checked" :checked="(isSelected - 1)==index?true:false"
-								@click="Select"></radio> -->
 						</view>
 					</view>
 				</view>
@@ -481,7 +479,7 @@
 					return
 				}
 
-				if (this.isSelected) {
+				if (this.isSelected == null) {
 					console.log("未选择")
 					uni.showToast({
 						title: "请选择文件",
@@ -537,6 +535,7 @@
 			//试听方法
 			Play(e) {
 				console.log("试听")
+				this.isSelected = parseInt(e.currentTarget.id) + 1
 				if (this.devices.length == 0) {
 					uni.showToast({
 						title: "设备未连接",
