@@ -27,11 +27,49 @@
 				</button>
 			</view>
 		</view>
+    <u-popup :show="isShowPopup" mode="center" :round="10" :closeable="true" @close="popupClose">
+      <view style="display: flex; justify-content: center; line-height: 120rpx; font-weight: 600;">设备列表</view>
+      <view style="width: 600rpx; height: 500rpx;">
+        <scroll-view scroll-y="true" style="height: 500rpx; z-index: 99;">
+          <u-cell-group :border="false">
+            <u-cell 
+              v-for="(device,index) in searchList" 
+              :key="index" 
+              :title="device.name" 
+              :border="false"
+              :isLink="true"
+              @click="connectDevice(device)">
+              <view slot="right-icon">
+                <u-tag :text="'信号: '+device.RSSI" :type="device.RSSI>50?'success':device.RSSI<20?'error':'warning'" size="mini"></u-tag>
+              </view>
+            </u-cell>
+          </u-cell-group>
+        </scroll-view>
+      </view>
+    </u-popup>
 	</view>
 </template>
 
 <script>
 	var _self
+  const deviceList = [
+    {
+      name: 'JHY-SMART001',
+      rssi: '1'
+    }, {
+      name: 'JHY-SMART001',
+      rssi: '2'
+    }, {
+      name: 'JHY-SMART001',
+      rssi: '3'
+    }, {
+      name: 'JHY-SMART001',
+      rssi: '4'
+    }, {
+      name: 'JHY-SMART001',
+      rssi: '5'
+    }
+  ]
 	export default {
 		name: "links",
 		data() {
@@ -42,10 +80,174 @@
 				searchingLoading: false,
 				devices: [],
 				isLoadingShow: false,
-				isSyncing: false
+				isSyncing: false,
+        
+        isShowPopup: false,
+        searchList: [],
+        demoDeviceList: deviceList
 			};
 		},
 		methods: {
+      popupClose() {
+        this.isShowPopup = false
+        this.searchingLoading = false
+        this.searchList = []
+      },
+      connectDevice(device) {
+        this.popupClose()
+        wx.createBLEConnection({
+        	deviceId: device.deviceId,
+        	success: (res) => {
+        		_self.isLoadingShow = false
+        		console.log("设备" + device.name + "已连接")
+        		wx.showToast({
+        			title: '设备' + device.name + '已连接',
+        			icon: 'none'
+        		})
+        		wx.showLoading({
+        			title: '同步数据中...',
+        			mask: true
+        		})
+        		console.log("同步数据Loading")
+        		_self.isSyncing = true
+        		setTimeout(() => {
+        			if (_self.isSyncing) {
+        				wx.hideLoading()
+        				_self.isSyncing = false
+        				console.log("同步数据Loading关闭")
+        			}
+        		}, 8000)
+        		//保证重复连接时只出现一个设备
+        		_self.devices.splice(0, _self.devices.length)
+        		_self.devices.push({
+        			name: device.name,
+        			deviceId: device.deviceId,
+        			status: 'connected',
+        			avatar: 'static/bluetooth_con.png',
+        			services: []
+        		})
+        		_self.isConnected = true
+        		_self.devices.forEach((device, i) => {
+        			//获取连接的设备的服务列表
+        			wx.getBLEDeviceServices({
+        				deviceId: device.deviceId,
+        				success: (res) => {
+        					console.log(res)
+        					device.services = res.services
+        					device.services.forEach((service) => {
+        						//获取所有服务下的特征值
+        						wx.getBLEDeviceCharacteristics({
+        							deviceId: device.deviceId,
+        							serviceId: service.uuid,
+        							success: (res) => {
+        								service.characteristics = res.characteristics
+        							}
+        						})
+        					})
+        				}
+        			})
+        		})
+        		setTimeout(() => {
+        			//保存指定的服务及其特征值
+        			_self.SaveUUID()
+        			console.log("UUDI: " + _self.primaryServiceUUID + " write: " + _self.writeUUID)
+        			if (_self.primaryServiceUUID != '' && _self.writeUUID != '') {
+        				setTimeout(() => {
+        					wx.notifyBLECharacteristicValueChange({
+        						deviceId: this.devices[0].deviceId,
+        						serviceId: this.primaryServiceUUID,
+        						characteristicId: this.readUUID,
+        						state: true
+        					})
+        					wx.onBLECharacteristicValueChange((res) => {
+        						let u8Arr = new Uint8Array(res.value)
+        						console.log("收到监听数据")
+        						console.log(u8Arr)
+        						let offset = u8Arr.indexOf(0x7E)
+        						if (u8Arr[offset + 1] == 0x05 && u8Arr[offset + 2] == 0x99) {
+        							console.log("收到模式指令")
+        							let isTiming = u8Arr[offset + 3]
+        							let isPlayingOncePower = u8Arr[offset + 4]
+        							let isCycleAtTime = u8Arr[offset + 5]
+        							console.log("isTiming: " + isTiming)
+        							console.log("isPlayingOncePower: " + isPlayingOncePower)
+        							console.log("isCycleAtTime: " + isCycleAtTime)
+        							if (isTiming == 0x00) {
+        								getApp().globalData.mode = 1
+        							}
+        							else if (isPlayingOncePower == 0x01) {
+        								getApp().globalData.mode = 2
+        							}
+        							else if (isCycleAtTime == 0x01) {
+        								getApp().globalData.mode = 3
+        							}
+        							_self.$forceUpdate()
+        							if (_self.isSyncing) {
+        								_self.isSyncing = false
+        								wx.hideLoading()
+        								console.log("同步数据Loading关闭")
+        							}
+        						}
+        						wx.offBLECharacteristicValueChange()
+        					})
+        					//写特征值操作
+        					setTimeout(() => {
+        						wx.writeBLECharacteristicValue({
+        							deviceId: _self.devices[0].deviceId,
+        							serviceId: _self.primaryServiceUUID,
+        							characteristicId: _self.writeUUID,
+        							value: _self.uploadTime(),
+        							success: (res) => {
+        								console.log("发送成功 " + res.errMsg)
+        								console.log(res)
+        							},
+        							fail: (res) => {
+        								console.log("发送失败 " + res.errMsg)
+        								if (_self.isSyncing) {
+        									_self.isSyncing = false
+        									wx.hideLoading()
+        									console.log("同步数据Loading关闭")
+        								}
+        							}
+        						})
+        					}, 100)
+        				}, 1000)
+        			}
+        		}, 1000)
+        	},
+        	fail: (res) => {
+        		wx.showToast({
+        			title: '连接失败 ' + res.errorCode,
+        			icon: 'none'
+        		})
+        		console.log("连接失败")
+        		if (_self.isConnected) {
+        			return
+        		}
+        		wx.closeBluetoothAdapter({
+        			success: res => {
+        				console.log("关闭蓝牙适配器成功")
+        				setTimeout(() => {
+        					wx.openBluetoothAdapter({
+        						success: res => {
+        							console.log("重新打开蓝牙适配器成功")
+        						},
+        						fail: res => {
+        							console.log("重新打开蓝牙适配器失败")
+        						}
+        					})
+        				}, 100)
+        			},
+        			fail: res => {
+        				console.log("关闭蓝牙适配器失败")
+        			},
+        			complete: () => {
+        				_self.searchingLoading = false
+        			}
+        		})
+        	}
+        })
+      },
 			//通过AT指令上传时间
 			uploadTime() {
 				let numArr = new Array()
@@ -104,7 +306,7 @@
 								_self.isLoadingShow = false
 								wx.hideLoading()
 							}
-						}, 1000 * 5)
+						}, 1000 * 3)
 						//打开[蓝牙发现]
 						wx.startBluetoothDevicesDiscovery({
 							success: (res) => {
@@ -113,167 +315,20 @@
 									//获取[设备信息]
 									wx.getBluetoothDevices({
 										success: (res) => {
+                      this.searchingLoading = false
 											console.log('搜索设备数目' + res.devices.length)
+                      res.devices.sort((a,b) => {
+                        return b.RSSI - a.RSSI
+                      })
 											res.devices.forEach((item, index) => {
+                        item.RSSI = 100 + parseInt(item.RSSI)
 												console.log(item)
-												//发现有名为[JHY-SMART001]的设备时尝试链接
-												if (item.name === "JHY-SMART001") {
-													wx.createBLEConnection({
-														deviceId: item.deviceId,
-														success: (res) => {
-															_self.isLoadingShow = false
-															console.log("设备" + item.name + "已连接")
-															wx.showToast({
-																title: '设备' + item.name + '已连接',
-																icon: 'none'
-															})
-															wx.showLoading({
-																title: '同步数据中...',
-																mask: true
-															})
-															console.log("同步数据Loading")
-															_self.isSyncing = true
-															setTimeout(() => {
-																if (_self.isSyncing) {
-																	wx.hideLoading()
-																	_self.isSyncing = false
-																	console.log("同步数据Loading关闭")
-																}
-															}, 8000)
-															//保证重复连接时只出现一个设备
-															_self.devices.splice(0, _self.devices.length)
-															_self.devices.push({
-																name: item.name,
-																deviceId: item.deviceId,
-																status: 'connected',
-																avatar: 'static/bluetooth_con.png',
-																services: []
-															})
-															_self.isConnected = true
-															_self.devices.forEach((device, i) => {
-																//获取连接的设备的服务列表
-																wx.getBLEDeviceServices({
-																	deviceId: device.deviceId,
-																	success: (res) => {
-																		console.log(res)
-																		device.services = res.services
-																		device.services.forEach((service) => {
-																			//获取所有服务下的特征值
-																			wx.getBLEDeviceCharacteristics({
-																				deviceId: device.deviceId,
-																				serviceId: service.uuid,
-																				success: (res) => {
-																					service.characteristics = res.characteristics
-																				}
-																			})
-																		})
-																	}
-																})
-															})
-															setTimeout(() => {
-																//保存指定的服务及其特征值
-																_self.SaveUUID()
-																console.log("UUDI: " + _self.primaryServiceUUID + " write: " + _self.writeUUID)
-																if (_self.primaryServiceUUID != '' && _self.writeUUID != '') {
-																	setTimeout(() => {
-																		wx.notifyBLECharacteristicValueChange({
-																			deviceId: this.devices[0].deviceId,
-																			serviceId: this.primaryServiceUUID,
-																			characteristicId: this.readUUID,
-																			state: true
-																		})
-																		wx.onBLECharacteristicValueChange((res) => {
-																			let u8Arr = new Uint8Array(res.value)
-																			console.log("收到监听数据")
-																			console.log(u8Arr)
-																			let offset = u8Arr.indexOf(0x7E)
-																			if (u8Arr[offset + 1] == 0x05 && u8Arr[offset + 2] == 0x99) {
-																				console.log("收到模式指令")
-																				let isTiming = u8Arr[offset + 3]
-																				let isPlayingOncePower = u8Arr[offset + 4]
-																				let isCycleAtTime = u8Arr[offset + 5]
-																				console.log("isTiming: " + isTiming)
-																				console.log("isPlayingOncePower: " + isPlayingOncePower)
-																				console.log("isCycleAtTime: " + isCycleAtTime)
-																				if (isTiming == 0x00) {
-																					getApp().globalData.mode = 1
-																				}
-																				else if (isPlayingOncePower == 0x01) {
-																					getApp().globalData.mode = 2
-																				}
-																				else if (isCycleAtTime == 0x01) {
-																					getApp().globalData.mode = 3
-																				}
-																				_self.$forceUpdate()
-																				if (_self.isSyncing) {
-																					_self.isSyncing = false
-																					wx.hideLoading()
-																					console.log("同步数据Loading关闭")
-																				}
-																			}
-																			wx.offBLECharacteristicValueChange()
-																		})
-																		//写特征值操作
-																		setTimeout(() => {
-																			wx.writeBLECharacteristicValue({
-																				deviceId: _self.devices[0].deviceId,
-																				serviceId: _self.primaryServiceUUID,
-																				characteristicId: _self.writeUUID,
-																				value: _self.uploadTime(),
-																				success: (res) => {
-																					console.log("发送成功 " + res.errMsg)
-																					console.log(res)
-																				},
-																				fail: (res) => {
-																					console.log("发送失败 " + res.errMsg)
-																					if (_self.isSyncing) {
-																						_self.isSyncing = false
-																						wx.hideLoading()
-																						console.log("同步数据Loading关闭")
-																					}
-																				}
-																			})
-																		}, 100)
-																	}, 1000)
-																}
-															}, 1000)
-															//关闭[蓝牙发现]以节省系统资源
-															wx.stopBluetoothDevicesDiscovery()
-															_self.searchingLoading = false
-														},
-														fail: (res) => {
-															wx.showToast({
-																title: '连接失败 ' + res.errorCode,
-																icon: 'none'
-															})
-															console.log("连接失败")
-															if (_self.isConnected) {
-																return
-															}
-															wx.closeBluetoothAdapter({
-																success: res => {
-																	console.log("关闭蓝牙适配器成功")
-																	setTimeout(() => {
-																		wx.openBluetoothAdapter({
-																			success: res => {
-																				console.log("重新打开蓝牙适配器成功")
-																			},
-																			fail: res => {
-																				console.log("重新打开蓝牙适配器失败")
-																			}
-																		})
-																	}, 100)
-																},
-																fail: res => {
-																	console.log("关闭蓝牙适配器失败")
-																},
-																complete: () => {
-																	_self.searchingLoading = false
-																}
-															})
-														}
-													})
-												}
+                        if (item.name.includes('JHY-SMART')) {
+                          this.searchList.push(item)
+                        }
+                        if (this.searchList.length > 0) {
+                          this.isShowPopup = true
+                        }
 											})
 										},
 										complete: () => {

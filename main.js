@@ -1,6 +1,9 @@
 import Vue from 'vue'
 import App from './App'
 
+import uView from '@/uni_modules/uview-ui'
+Vue.use(uView)
+
 import links from './pages/links/links.vue'
 Vue.component('links',links)
 
