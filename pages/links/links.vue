@@ -95,6 +95,10 @@
       },
       connectDevice(device) {
         this.popupClose()
+        wx.showLoading({
+          title: '设备连接中',
+          icon: 'none'
+        })
         wx.createBLEConnection({
         	deviceId: device.deviceId,
         	success: (res) => {
@@ -323,6 +327,7 @@
 											res.devices.forEach((item, index) => {
                         item.RSSI = 100 + parseInt(item.RSSI)
 												console.log(item)
+                        this.searchList.push(item)
                         if (item.name.includes('JHY-SMART')) {
                           this.searchList.push(item)
                         }
